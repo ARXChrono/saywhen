@@ -19,8 +19,19 @@
     --primary-dim: oklch(0.40 0.06 200);
     --accent: oklch(0.80 0.14 75);
     --danger: oklch(0.62 0.16 25);
+    --led: oklch(0.84 0.16 150);
+    --led-glow: oklch(0.84 0.16 150 / 0.35);
+    --green: oklch(0.60 0.13 155);
+    --green-hover: oklch(0.66 0.14 155);
     --radius: 10px;
     --z-toast: 10;
+    /* per-timer name hues, assigned cyclically */
+    --hue-0: oklch(0.80 0.11 200);
+    --hue-1: oklch(0.78 0.13 300);
+    --hue-2: oklch(0.74 0.16 25);
+    --hue-3: oklch(0.82 0.13 75);
+    --hue-4: oklch(0.80 0.14 150);
+    --hue-5: oklch(0.78 0.12 250);
   }
 
   * { box-sizing: border-box; }
@@ -44,7 +55,7 @@
   }
 
   /* ---------- Header ---------- */
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 1rem 3rem; }
 
   header {
     display: flex;
@@ -54,7 +65,7 @@
     gap: 0.75rem 1.5rem;
     padding: 2rem 0 1.25rem;
   }
-  .brand { display: flex; align-items: baseline; gap: 0.75rem; }
+  .brand { display: flex; flex-direction: column; gap: 0.1rem; }
   h1 {
     margin: 0;
     font-size: 1.55rem;
@@ -77,7 +88,7 @@
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
-    transition: background 150ms ease-out, border-color 150ms ease-out;
+    transition: background 150ms ease-out, border-color 150ms ease-out, transform 100ms ease-out;
   }
   .btn:hover { background: var(--surface-2); }
   .btn:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -103,33 +114,74 @@
   }
   .icon-btn:hover { color: var(--danger); background: var(--surface-2); }
 
-  /* ---------- Voice bar ---------- */
-  .voicebar {
-    display: flex;
+  /* ---------- Header icon buttons ---------- */
+  .icon-act {
+    width: 2.4rem;
+    height: 2.4rem;
+    display: inline-flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 0.75rem 1.25rem;
+    justify-content: center;
+    gap: 0.45rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0;
+    transition: color 150ms ease-out, border-color 150ms ease-out, transform 100ms ease-out;
+  }
+  .icon-act svg { flex-shrink: 0; }
+  .act-label { display: none; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+  .icon-act:hover { color: var(--ink); border-color: var(--primary-dim); }
+  .icon-act.active { color: var(--primary); border-color: var(--primary-dim); }
+  .icon-act.blocked { color: var(--danger); border-color: var(--danger); }
+
+  /* ---------- Settings menu panel ---------- */
+  .menu[hidden] { display: none; }
+  .menu {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.9rem;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 0.75rem 1rem;
+    padding: 1rem 1.25rem;
     margin-bottom: 1.75rem;
   }
-  .voicebar label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); }
-  .voicebar select {
+  .menu-row { display: flex; align-items: center; gap: 0.75rem; }
+  .menu-label {
+    width: 5.5rem;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .menu select {
+    flex: 1;
+    min-width: 0;
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 0.35rem 0.5rem;
-    max-width: 15rem;
   }
-  .voicebar input[type="range"] { accent-color: var(--primary); width: 7rem; }
-  .voicebar input[type="checkbox"] { accent-color: var(--primary); width: 1rem; height: 1rem; }
-  .voicebar output { font-variant-numeric: tabular-nums; color: var(--ink); min-width: 2.4em; }
-  .voicebar .spacer { flex: 1; }
+  .menu input[type="range"] { accent-color: var(--primary); flex: 1; }
+  .menu input[type="checkbox"] { accent-color: var(--primary); width: 1rem; height: 1rem; }
+  .menu output { font-variant-numeric: tabular-nums; color: var(--ink); min-width: 2.6em; }
+  .menu-check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); cursor: pointer; }
   .speech-warn { color: var(--accent); font-size: 0.85rem; }
 
   /* ---------- Board title ---------- */
+  .board-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.1rem;
+  }
   .board-title {
     display: block;
     width: 100%;
@@ -137,7 +189,7 @@
     border: 1px solid transparent;
     border-radius: 8px;
     padding: 0.3rem 0.5rem;
-    margin: -0.5rem 0 1rem -0.5rem;
+    margin: 0 0 1rem -0.5rem;
     font-size: 1.35rem;
     font-weight: 700;
     letter-spacing: -0.01em;
@@ -158,10 +210,41 @@
     margin: -0.75rem 0 1.25rem;
   }
   .allbar-label {
+    width: 100%;
     font-size: 0.85rem;
     color: var(--muted);
-    margin-right: 0.5rem;
   }
+  .allbar .btn { flex: 1; }
+  #startAllBtn {
+    background: var(--green);
+    border-color: var(--green);
+    color: oklch(0.99 0 0);
+    font-weight: 700;
+  }
+  #startAllBtn:hover:not(:disabled) { background: var(--green-hover); border-color: var(--green-hover); }
+
+  /* ---------- Footer clock ---------- */
+  .clockbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 2.5rem;
+    font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .clock-label {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .clockbar time { color: var(--ink); }
+  .next-up::before { content: '· '; }
 
   /* ---------- Timer grid ---------- */
   .timers {
@@ -185,7 +268,7 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 1.1rem 1.25rem 1.25rem;
+    padding: 1rem 1.1rem 1.1rem;
   }
   .timer[data-status="done"] { border-color: var(--accent); }
 
@@ -207,36 +290,39 @@
   .clock, .clock-input {
     display: block;
     width: 100%;
-    font-size: 3.4rem;
+    font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 2.2rem;
     font-weight: 700;
-    letter-spacing: -0.01em;
+    letter-spacing: 0.02em;
     font-variant-numeric: tabular-nums;
     line-height: 1.1;
-    margin: 0.25rem 0 0.5rem;
+    margin: 0;
   }
   .clock {
     appearance: none;
     background: none;
     border: none;
     padding: 0;
-    color: var(--ink);
+    color: var(--led);
     cursor: text;
     text-align: left;
-    font-family: inherit;
   }
+  .clock .num { text-shadow: 0 0 16px var(--led-glow); }
   .clock:hover .num { color: var(--primary-hover); }
   .clock .unit {
-    font-size: 1.15rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--muted);
-    margin-right: 0.45rem;
+    margin-right: 0.4rem;
+    text-shadow: none;
   }
   .clock .max {
-    font-size: 1.15rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--muted);
     margin-left: 0.2rem;
     letter-spacing: 0;
+    text-shadow: none;
   }
   .clock-input[hidden] { display: none; }
   .clock-input {
@@ -245,9 +331,8 @@
     border-bottom: 2px solid var(--primary);
     border-radius: 0;
     padding: 0;
-    color: var(--ink);
+    color: var(--led);
     outline: none;
-    font-family: inherit;
   }
   .timer[data-status="paused"] .clock { color: var(--muted); }
   .timer[data-status="done"] .clock { color: var(--accent); }
@@ -292,10 +377,110 @@
   .cycle-chip:hover { color: var(--ink); }
   .clock-input.cycle-edit { border-bottom-color: var(--accent); }
 
-  .controls { display: flex; gap: 0.5rem; margin-bottom: 1.1rem; }
-  .controls .start { min-width: 5.5rem; }
+  .clock-wrap { flex: 1; min-width: 0; }
+  .timer-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0.4rem 0 0.6rem;
+  }
+  .actions { display: flex; flex-direction: column; gap: 0.4rem; flex-shrink: 0; }
+  .actions .btn { min-width: 5.5rem; text-align: center; }
+  .actions .start {
+    background: var(--green);
+    border-color: var(--green);
+    color: oklch(0.99 0 0);
+  }
+  .actions .start:hover:not(:disabled) { background: var(--green-hover); border-color: var(--green-hover); }
+  .actions .test {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: oklch(0.20 0.02 75);
+  }
+  .actions .test:hover:not(:disabled) { filter: brightness(1.08); }
 
-  .config { display: grid; gap: 0.8rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+  /* drag to reorder */
+  .drag-handle {
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    width: 1.4rem;
+    height: 1.8rem;
+    display: grid;
+    place-items: center;
+    margin-left: -0.3rem;
+    color: var(--muted);
+    opacity: 0.6;
+    cursor: grab;
+    touch-action: none;
+    transition: opacity 150ms ease-out;
+  }
+  .drag-handle:hover { opacity: 1; }
+  .drag-handle:active { cursor: grabbing; }
+  .timer.dragging {
+    border-color: var(--primary);
+    box-shadow: 0 18px 44px oklch(0 0 0 / 0.5), 0 4px 12px oklch(0 0 0 / 0.4);
+    cursor: grabbing;
+    will-change: transform;
+  }
+  .drop-slot {
+    border: 1px dashed var(--primary-dim);
+    border-radius: var(--radius);
+    background: oklch(0.65 0.10 200 / 0.05);
+  }
+
+  /* repeat toggle (music-player style) */
+  .icon-tgl {
+    appearance: none;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    width: 1.9rem;
+    height: 1.9rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 150ms ease-out, background 150ms ease-out;
+  }
+  .icon-tgl:hover { color: var(--ink); }
+  .icon-tgl.on { color: var(--primary); background: var(--primary-dim); }
+
+  /* small text actions under the status row */
+  .subctl { display: flex; align-items: center; gap: 0.9rem; margin-top: 0.7rem; }
+  .subctl .spacer { flex: 1; }
+  .link {
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 150ms ease-out;
+  }
+  .link:hover { color: var(--ink); }
+
+  .config { display: none; }
+  .timer.open .config { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.8rem; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 0.8rem; }
+
+  /* status dot + badges */
+  .status-label::before { content: '● '; font-size: 0.7em; }
+  .timer[data-status="running"] .status-label { color: var(--led); }
+  .warn-badge { color: var(--accent); }
+  .timer.closing .warn-badge { color: var(--danger); }
+
+  /* per-timer name hues */
+  .timer.hue-0 .name { color: var(--hue-0); }
+  .timer.hue-1 .name { color: var(--hue-1); }
+  .timer.hue-2 .name { color: var(--hue-2); }
+  .timer.hue-3 .name { color: var(--hue-3); }
+  .timer.hue-4 .name { color: var(--hue-4); }
+  .timer.hue-5 .name { color: var(--hue-5); }
 
   .duration-row { display: flex; align-items: center; gap: 0.6rem 1rem; flex-wrap: wrap; }
 
@@ -316,20 +501,6 @@
   .preset:hover:not(:disabled) { color: var(--ink); border-color: var(--primary-dim); }
   .preset:disabled { opacity: 0.45; cursor: not-allowed; }
 
-  .mode-row { display: flex; align-items: center; gap: 0.75rem; }
-  .segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-  .segmented label {
-    padding: 0.32rem 0.85rem;
-    font-size: 0.82rem;
-    color: var(--muted);
-    cursor: pointer;
-    transition: background 150ms ease-out, color 150ms ease-out;
-  }
-  .segmented label:has(:checked) { background: var(--primary-dim); color: var(--ink); }
-  .segmented input { position: absolute; opacity: 0; pointer-events: none; }
-  .segmented label:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: -2px; }
-  .mode-hint { font-size: 0.78rem; color: var(--muted); }
-
   .warn-row {
     display: flex;
     align-items: center;
@@ -349,7 +520,7 @@
     text-align: center;
     font-variant-numeric: tabular-nums;
   }
-  .warn-hint { color: var(--muted); opacity: 0.75; }
+  .warn-hint { flex-basis: 100%; color: var(--muted); opacity: 0.75; font-size: 0.75rem; }
 
   /* final-stretch state: inside the warning threshold */
   @keyframes closingPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
@@ -358,14 +529,15 @@
   .timer.closing .bar-fill { background: var(--danger); }
   .timer.closing .status-label { color: var(--danger); }
 
-  .msg { display: grid; gap: 0.25rem; font-size: 0.78rem; color: var(--muted); }
-  .msg input {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0.45rem 0.6rem;
-    width: 100%;
-  }
+  /* entrances, exits, press feedback */
+  @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(-4px); } }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+  @keyframes cardOut { to { opacity: 0; transform: scale(0.96); } }
+  .menu:not([hidden]) { animation: fadeSlideIn 200ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .timer.open .config { animation: fadeSlideIn 200ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .timer.enter { animation: cardIn 240ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .timer.leaving { animation: cardOut 160ms ease-out forwards; pointer-events: none; }
+  .btn:active:not(:disabled), .icon-act:active { transform: scale(0.97); }
 
   /* fire flash */
   @keyframes firePulse {
@@ -387,11 +559,17 @@
     * { transition: none !important; animation: none !important; }
   }
 
-  @media (max-width: 480px) {
-    .clock { font-size: 2.8rem; }
-    .voicebar select { max-width: 100%; flex: 1; }
-    .voicebar label { width: 100%; }
-    .voicebar .spacer { display: none; }
+  /* scale up from the mobile base */
+  @media (min-width: 640px) {
+    .wrap { padding: 0 1.25rem 4rem; }
+    .icon-act { width: auto; padding: 0 0.8rem; }
+    .act-label { display: inline; }
+    .clock, .clock-input { font-size: 2.7rem; }
+    .timer { padding: 1.1rem 1.25rem 1.25rem; }
+    .menu select { max-width: 20rem; }
+    .menu input[type="range"] { max-width: 14rem; }
+    .allbar-label { width: auto; margin-right: 0.5rem; }
+    .allbar .btn { flex: 0 0 auto; }
   }
 </style>
 </head>
@@ -403,37 +581,68 @@
       <p class="tag">timers that speak up</p>
     </div>
     <div class="header-actions">
-      <button class="btn" id="popoutBtn" type="button" title="Float saywhen above other windows">Pop out</button>
-      <button class="btn" id="exportBtn" type="button">Export</button>
-      <button class="btn" id="importBtn" type="button">Import</button>
+      <button class="icon-act" id="menuBtn" type="button" title="Voice &amp; sound settings" aria-expanded="false" aria-label="Voice and sound settings">
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+          <path d="M2 4h12M2 8h12M2 12h12"/>
+          <circle cx="6" cy="4" r="1.7" fill="currentColor" stroke="none"/>
+          <circle cx="10.5" cy="8" r="1.7" fill="currentColor" stroke="none"/>
+          <circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/>
+        </svg>
+        <span class="act-label">Settings</span>
+      </button>
+      <button class="icon-act" id="popoutBtn" type="button" title="Pop out: float above other windows" aria-label="Pop out to floating window">
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9.5 1.5l5 5-3 .9-2.6 4.1-4.4-4.4 4.1-2.6z"/>
+          <path d="M6 10l-4.5 4.5"/>
+        </svg>
+        <span class="act-label">Pop out</span>
+      </button>
+      <button class="icon-act" id="exportBtn" type="button" title="Export backup (JSON)" aria-label="Export backup">
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M8 2v8M5 7l3 3 3-3M2.5 13.5h11"/>
+        </svg>
+        <span class="act-label">Export</span>
+      </button>
+      <button class="icon-act" id="importBtn" type="button" title="Import backup (JSON)" aria-label="Import backup">
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M8 10V2M5 5l3-3 3 3M2.5 13.5h11"/>
+        </svg>
+        <span class="act-label">Import</span>
+      </button>
       <input type="file" id="importFile" accept="application/json,.json" hidden>
       <button class="btn primary" id="addBtn" type="button">+ Add timer</button>
     </div>
   </header>
 
-  <section class="voicebar" aria-label="Voice settings">
-    <label>Voice
+  <section class="menu" id="menuPanel" aria-label="Voice and sound settings" hidden>
+    <div class="menu-row">
+      <span class="menu-label">Voice</span>
       <select id="voiceSelect" aria-label="Speech voice"></select>
-    </label>
-    <label>Rate
+    </div>
+    <div class="menu-row">
+      <span class="menu-label">Rate</span>
       <input type="range" id="rateSlider" min="0.5" max="2" step="0.1" value="1">
       <output id="rateValue" for="rateSlider">1.0×</output>
-    </label>
-    <label>Volume
+    </div>
+    <div class="menu-row">
+      <span class="menu-label">Volume</span>
       <input type="range" id="volSlider" min="0" max="1" step="0.05" value="1">
       <output id="volValue" for="volSlider">100%</output>
-    </label>
-    <label>
-      <input type="checkbox" id="chimeToggle" checked>
-      Chime before speaking
-    </label>
-    <span class="spacer"></span>
-    <button class="btn" id="testBtn" type="button">Test voice</button>
-    <span class="speech-warn" id="speechWarn" hidden>Speech not supported in this browser</span>
+    </div>
+    <div class="menu-row">
+      <span class="menu-label">Chime</span>
+      <label class="menu-check"><input type="checkbox" id="chimeToggle" checked> before speaking</label>
+    </div>
+    <div class="menu-row">
+      <span class="menu-label"></span>
+      <button class="btn" id="testBtn" type="button">Test voice</button>
+      <span class="speech-warn" id="speechWarn" hidden>Speech not supported in this browser</span>
+    </div>
   </section>
 
+  <label class="board-label" for="boardTitle">Board</label>
   <input class="board-title" id="boardTitle" type="text" maxlength="80"
-         placeholder="Name this board…" aria-label="Board title">
+         placeholder="Name this board…">
 
   <section class="allbar" id="allBar" aria-label="Controls for all timers" hidden>
     <span class="allbar-label">All timers</span>
@@ -444,6 +653,12 @@
 
   <main class="timers" id="timers" aria-live="off"></main>
   <p class="empty" id="empty" hidden>No timers. Hit <strong>+ Add timer</strong> to create one.</p>
+
+  <footer class="clockbar">
+    <span class="clock-label">local</span>
+    <time id="nowClock"></time>
+    <span class="next-up" id="nextUp" hidden></span>
+  </footer>
 </div>
 
 <div class="pip-note" id="pipNote" hidden>
@@ -485,11 +700,11 @@
       mode: 'once',            // 'once' | 'loop'
       durationMs: 60000,
       remainingMs: 60000,
-      message: "Time's up.",
       status: 'idle',          // 'idle' | 'running' | 'paused' | 'done'
       fireCount: 0,
       warn: false,             // final-countdown warning enabled
-      warnSec: 20              // threshold in seconds: speak + flash + beep
+      warnSec: 20,             // threshold in seconds: speak + flash + beep
+      hue: 0                   // name color, cycles through 6 hues
     };
     if (overrides) for (var k in overrides) t[k] = overrides[k];
     return t;
@@ -497,7 +712,7 @@
 
   function defaultState() {
     return {
-      settings: { voiceURI: '', rate: 1, volume: 1, chime: true, boardTitle: '' },
+      settings: { voiceURI: '', rate: 1, volume: 1, chime: true, boardTitle: '', menuOpen: true },
       timers: [makeTimer()]
     };
   }
@@ -511,11 +726,12 @@
         rate: clampNum(s.rate, 0.5, 2, 1),
         volume: clampNum(s.volume, 0, 1, 1),
         chime: s.chime !== false,
-        boardTitle: typeof s.boardTitle === 'string' ? s.boardTitle.slice(0, 80) : ''
+        boardTitle: typeof s.boardTitle === 'string' ? s.boardTitle.slice(0, 80) : '',
+        menuOpen: typeof s.menuOpen === 'boolean' ? s.menuOpen : false
       },
       timers: []
     };
-    raw.timers.forEach(function (rt) {
+    raw.timers.forEach(function (rt, idx) {
       if (!rt || typeof rt !== 'object') return;
       var dur = clampNum(rt.durationMs, 0, MAX_MS, 60000);
       var status = rt.status === 'paused' || rt.status === 'done' ? rt.status : 'idle';
@@ -532,11 +748,11 @@
         mode: rt.mode === 'loop' ? 'loop' : 'once',
         durationMs: dur,
         remainingMs: rem,
-        message: typeof rt.message === 'string' ? rt.message.slice(0, 400) : '',
         status: status,
         fireCount: clampNum(rt.fireCount, 0, 1e9, 0),
         warn: rt.warn === true,
-        warnSec: clampNum(rt.warnSec, 1, 3600, 20)
+        warnSec: clampNum(rt.warnSec, 1, 3600, 20),
+        hue: clampNum(rt.hue, 0, 5, idx % 6)
       }));
     });
     return state;
@@ -749,50 +965,89 @@
     return Math.max(0, Math.min(secs * 1000, MAX_MS));
   }
 
+  // FLIP: animate cards from their old grid positions to their new ones
+  function flipMove(mutate) {
+    var cards = Array.prototype.filter.call(
+      document.querySelectorAll('#timers .timer'),
+      function (c) { return !c.classList.contains('dragging'); }
+    );
+    var before = cards.map(function (c) { return c.getBoundingClientRect(); });
+    mutate();
+    cards.forEach(function (c, i) {
+      var after = c.getBoundingClientRect();
+      var dx = before[i].left - after.left;
+      var dy = before[i].top - after.top;
+      if (!dx && !dy) return;
+      c.style.transition = 'none';
+      c.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+      requestAnimationFrame(function () {
+        c.style.transition = 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)';
+        c.style.transform = '';
+        setTimeout(function () { c.style.transition = ''; }, 260);
+      });
+    });
+  }
+
   // ---------- timer card DOM ----------
 
   function buildCard(t) {
     var card = document.createElement('article');
-    card.className = 'timer';
+    card.className = 'timer hue-' + (t.hue || 0);
     card.dataset.id = t.id;
 
     card.innerHTML =
       '<div class="timer-top">' +
+        '<button class="drag-handle" type="button" aria-label="Drag to reorder" title="Drag to reorder">' +
+          '<svg viewBox="0 0 10 16" width="10" height="16" fill="currentColor" aria-hidden="true">' +
+            '<circle cx="3" cy="3" r="1.3"/><circle cx="7" cy="3" r="1.3"/>' +
+            '<circle cx="3" cy="8" r="1.3"/><circle cx="7" cy="8" r="1.3"/>' +
+            '<circle cx="3" cy="13" r="1.3"/><circle cx="7" cy="13" r="1.3"/>' +
+          '</svg>' +
+        '</button>' +
         '<input class="name" aria-label="Timer name" maxlength="80">' +
         '<button class="icon-btn delete" type="button" aria-label="Delete timer">✕</button>' +
       '</div>' +
-      '<button class="clock" type="button" title="Click to type a time"></button>' +
-      '<input class="clock-input" inputmode="numeric" aria-label="Type a time, like 7:30 or 730" hidden>' +
+      '<div class="timer-main">' +
+        '<div class="clock-wrap">' +
+          '<button class="clock" type="button" title="Click to type a time"></button>' +
+          '<input class="clock-input" inputmode="numeric" aria-label="Type a time, like 7:30 or 730" hidden>' +
+        '</div>' +
+        '<div class="actions">' +
+          '<button class="btn start" type="button">Start</button>' +
+          '<button class="btn test" type="button" title="Preview this alert now: chime + spoken message. Does not affect the countdown.">Test</button>' +
+        '</div>' +
+      '</div>' +
       '<div class="bar" aria-hidden="true"><div class="bar-fill"></div></div>' +
       '<div class="meta"><span class="status-label"></span><span class="meta-right">' +
+        '<span class="warn-badge" hidden></span>' +
         '<button class="cycle-chip" type="button" title="Click to set the cycle length"></button>' +
         '<span class="fires" hidden></span>' +
       '</span></div>' +
-      '<div class="controls">' +
-        '<button class="btn primary start" type="button">Start</button>' +
-        '<button class="btn resync" type="button" title="Set where the countdown is right now">Resync</button>' +
-        '<button class="btn reset" type="button">Reset</button>' +
+      '<div class="subctl">' +
+        '<button class="link resync" type="button" title="Set where the countdown is right now">Resync</button>' +
+        '<button class="link reset" type="button">Reset</button>' +
+        '<span class="spacer"></span>' +
+        '<button class="icon-tgl repeat-btn" type="button" aria-pressed="false" title="Repeat: re-arm and go again at zero">' +
+          '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="M11 1.5L13.5 4L11 6.5"/>' +
+            '<path d="M2.5 8V6.5a2.5 2.5 0 012.5-2.5h8"/>' +
+            '<path d="M5 14.5L2.5 12L5 9.5"/>' +
+            '<path d="M13.5 8v1.5a2.5 2.5 0 01-2.5 2.5h-8"/>' +
+          '</svg>' +
+        '</button>' +
+        '<button class="link cfg" type="button" aria-expanded="false">settings ▾</button>' +
       '</div>' +
       '<div class="config">' +
         '<div class="duration-row">' +
           '<div class="presets" role="group" aria-label="Set duration"></div>' +
           '<div class="adders" role="group" aria-label="Add time"></div>' +
         '</div>' +
-        '<div class="mode-row">' +
-          '<div class="segmented" role="radiogroup" aria-label="Timer mode">' +
-            '<label><input type="radio" value="once" name="mode-' + t.id + '">Once</label>' +
-            '<label><input type="radio" value="loop" name="mode-' + t.id + '">Loop</label>' +
-          '</div>' +
-          '<span class="mode-hint"></span>' +
-        '</div>' +
         '<div class="warn-row">' +
           '<label class="warn-check"><input class="warn-input" type="checkbox"> warn at</label>' +
           '<input class="warn-sec" type="text" inputmode="numeric" maxlength="4" aria-label="Warning threshold in seconds">' +
-          '<span class="warn-tail">sec left <span class="warn-hint">· speaks, flashes red, beeps near zero</span></span>' +
+          '<span class="warn-tail">sec left</span>' +
+          '<span class="warn-hint">speaks, flashes red, beeps near zero</span>' +
         '</div>' +
-        '<label class="msg">Say this when time is up' +
-          '<input class="msg-input" type="text" maxlength="400" placeholder="e.g. Check the oven">' +
-        '</label>' +
       '</div>';
 
     var ref = {
@@ -803,25 +1058,25 @@
       barFill: card.querySelector('.bar-fill'),
       statusLabel: card.querySelector('.status-label'),
       cycleChip: card.querySelector('.cycle-chip'),
+      warnBadge: card.querySelector('.warn-badge'),
       fires: card.querySelector('.fires'),
       startBtn: card.querySelector('.start'),
+      testBtn: card.querySelector('.test'),
       resyncBtn: card.querySelector('.resync'),
       resetBtn: card.querySelector('.reset'),
+      cfgBtn: card.querySelector('.cfg'),
       presets: card.querySelector('.presets'),
       adders: card.querySelector('.adders'),
-      modeRadios: card.querySelectorAll('input[type="radio"]'),
-      modeHint: card.querySelector('.mode-hint'),
+      repeatBtn: card.querySelector('.repeat-btn'),
+      dragHandle: card.querySelector('.drag-handle'),
       warnInput: card.querySelector('.warn-input'),
-      warnSec: card.querySelector('.warn-sec'),
-      msgInput: card.querySelector('.msg-input')
+      warnSec: card.querySelector('.warn-sec')
     };
     els[t.id] = ref;
 
     ref.name.value = t.name;
-    ref.msgInput.value = t.message;
     ref.warnInput.checked = t.warn;
     ref.warnSec.value = t.warnSec;
-    ref.modeRadios.forEach(function (r) { r.checked = r.value === t.mode; });
 
     PRESETS.forEach(function (p) {
       var b = document.createElement('button');
@@ -852,10 +1107,27 @@
       save();
     });
     card.querySelector('.delete').addEventListener('click', function () {
-      removeTimer(t.id);
+      if (!confirm('Delete "' + t.name + '"?')) return;
+      ref.card.classList.add('leaving');
+      setTimeout(function () {
+        flipMove(function () { removeTimer(t.id); }); // neighbors close the gap smoothly
+      }, 170);
     });
     ref.startBtn.addEventListener('click', function () { toggleStart(t); });
+    ref.testBtn.addEventListener('click', function () {
+      ensureAudio();
+      announce(t.name);
+      // visible feedback even with sound off
+      ref.card.classList.remove('fired');
+      void ref.card.offsetWidth;
+      ref.card.classList.add('fired');
+    });
     ref.resetBtn.addEventListener('click', function () { resetTimer(t); });
+    ref.cfgBtn.addEventListener('click', function () {
+      var open = card.classList.toggle('open');
+      ref.cfgBtn.textContent = open ? 'settings ▴' : 'settings ▾';
+      ref.cfgBtn.setAttribute('aria-expanded', open);
+    });
 
     // The clock editor has two explicit modes:
     //   'current' — set where the countdown is right now (cycle untouched)
@@ -918,18 +1190,88 @@
     ref.clockInput.addEventListener('blur', function () {
       closeClockEdit(true, false); // click-away commits
     });
-    ref.modeRadios.forEach(function (r) {
-      r.addEventListener('change', function () {
-        if (!r.checked) return;
-        t.mode = r.value;
-        if (t.mode === 'once') t.fireCount = 0;
-        save();
-        updateCard(t);
-      });
-    });
-    ref.msgInput.addEventListener('change', function () {
-      t.message = ref.msgInput.value;
+    ref.repeatBtn.addEventListener('click', function () {
+      t.mode = t.mode === 'loop' ? 'once' : 'loop';
+      if (t.mode === 'once') t.fireCount = 0;
       save();
+      updateCard(t);
+    });
+
+    // drag to reorder: the card lifts and follows the pointer while a
+    // dashed slot glides through the grid (FLIP-animated neighbors)
+    ref.dragHandle.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      try { ref.dragHandle.setPointerCapture(e.pointerId); } catch (err) { /* synthetic pointer */ }
+      var card = ref.card;
+      var mount = document.getElementById('timers');
+      var startX = e.clientX, startY = e.clientY;
+      var rect = null;
+      var placeholder = null;
+      var started = false;
+      var finished = false;
+
+      function begin() {
+        started = true;
+        rect = card.getBoundingClientRect();
+        placeholder = document.createElement('div');
+        placeholder.className = 'drop-slot';
+        placeholder.style.height = rect.height + 'px';
+        mount.insertBefore(placeholder, card);
+        card.classList.add('dragging');
+        card.style.position = 'fixed';
+        card.style.left = rect.left + 'px';
+        card.style.top = rect.top + 'px';
+        card.style.width = rect.width + 'px';
+        card.style.zIndex = '10';
+        card.style.pointerEvents = 'none';
+      }
+
+      function onMove(ev) {
+        if (!started) {
+          // small threshold so a plain click doesn't lift the card
+          if (Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) < 5) return;
+          begin();
+        }
+        card.style.transform = 'translate(' + (ev.clientX - startX) + 'px,' + (ev.clientY - startY) + 'px) scale(1.02)';
+        var el = document.elementFromPoint(ev.clientX, ev.clientY);
+        var over = el && el.closest ? el.closest('#timers .timer') : null;
+        if (over && over !== card) {
+          var r2 = over.getBoundingClientRect();
+          var target = (ev.clientY - r2.top) < r2.height / 2 ? over : over.nextElementSibling;
+          if (target !== placeholder) {
+            flipMove(function () { mount.insertBefore(placeholder, target); });
+          }
+        }
+      }
+
+      function settle() {
+        if (finished) return;
+        finished = true;
+        card.classList.remove('dragging');
+        card.style.cssText = '';
+        mount.insertBefore(card, placeholder);
+        placeholder.remove();
+        var order = Array.prototype.map.call(mount.querySelectorAll('.timer'), function (c) { return c.dataset.id; });
+        state.timers.sort(function (a, b) { return order.indexOf(a.id) - order.indexOf(b.id); });
+        save();
+      }
+
+      function onUp() {
+        ref.dragHandle.removeEventListener('pointermove', onMove);
+        ref.dragHandle.removeEventListener('pointerup', onUp);
+        ref.dragHandle.removeEventListener('pointercancel', onUp);
+        if (!started) return;
+        // glide into the open slot, then snap the DOM into place
+        var pr = placeholder.getBoundingClientRect();
+        card.style.transition = 'transform 180ms cubic-bezier(0.22, 1, 0.36, 1)';
+        card.style.transform = 'translate(' + (pr.left - rect.left) + 'px,' + (pr.top - rect.top) + 'px)';
+        card.addEventListener('transitionend', settle, { once: true });
+        setTimeout(settle, 230); // fallback: reduced-motion kills transitions
+      }
+
+      ref.dragHandle.addEventListener('pointermove', onMove);
+      ref.dragHandle.addEventListener('pointerup', onUp);
+      ref.dragHandle.addEventListener('pointercancel', onUp);
     });
     ref.warnInput.addEventListener('change', function () {
       t.warn = ref.warnInput.checked;
@@ -1020,7 +1362,7 @@
   }
 
   function fire(t) {
-    announce(t.message);
+    announce(t.name);
     var ref = els[t.id];
     if (ref) {
       ref.card.classList.remove('fired');
@@ -1058,9 +1400,13 @@
     var showFires = t.mode === 'loop' || (t.mode === 'once' && t.status === 'done');
     ref.cycleChip.hidden = t.mode !== 'loop';
     ref.cycleChip.textContent = 'cycle ' + fmtShort(t.durationMs);
+    ref.warnBadge.hidden = !t.warn;
+    ref.warnBadge.textContent = '⚠ warn ' + t.warnSec + 's';
     ref.fires.hidden = !(showFires && t.fireCount > 0);
     ref.fires.textContent = 'fired ×' + t.fireCount;
-    ref.modeHint.textContent = t.mode === 'loop' ? 'repeats until paused' : 'fires a single time';
+    var looping = t.mode === 'loop';
+    ref.repeatBtn.classList.toggle('on', looping);
+    ref.repeatBtn.setAttribute('aria-pressed', String(looping));
 
     ref.presets.querySelectorAll('.preset').forEach(function (b) { b.disabled = running; });
     updateAllBar();
@@ -1103,8 +1449,20 @@
     return sec + ' seconds';
   }
 
+  var nowClock = document.getElementById('nowClock');
+  var nextUpEl = document.getElementById('nextUp');
+  var lastDocTitle = '';
+
+  function fmtWallClock(d) {
+    var h = d.getHours();
+    var ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return pad2(h) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()) + ' ' + ap;
+  }
+
   setInterval(function () {
     var now = Date.now();
+    nowClock.textContent = fmtWallClock(new Date(now));
     state.timers.forEach(function (t) {
       if (t.status !== 'running') return;
       var rt = runtime[t.id];
@@ -1148,17 +1506,42 @@
       }
       updateCard(t);
     });
+
+    // footer "next up" + live countdown in the tab title
+    var soonest = null;
+    state.timers.forEach(function (t) {
+      if (t.status !== 'running' || !runtime[t.id]) return;
+      var r = runtime[t.id].endTime - now;
+      if (!soonest || r < soonest.rem) soonest = { name: t.name, rem: Math.max(0, r) };
+    });
+    if (soonest) {
+      nextUpEl.hidden = false;
+      nextUpEl.textContent = 'next: ' + soonest.name + ' in ' + fmtShort(soonest.rem);
+    } else {
+      nextUpEl.hidden = true;
+    }
+    var docT = soonest
+      ? fmt(soonest.rem) + ' · ' + (state.settings.boardTitle || 'saywhen')
+      : (state.settings.boardTitle ? state.settings.boardTitle + ' — saywhen' : 'saywhen — timers that speak up');
+    if (docT !== lastDocTitle) { lastDocTitle = docT; document.title = docT; }
   }, TICK_MS);
 
   // ---------- header controls ----------
 
   document.getElementById('addBtn').addEventListener('click', function () {
-    var t = makeTimer({ name: 'Timer ' + (state.timers.length + 1) });
+    var t = makeTimer({
+      name: 'Timer ' + (state.timers.length + 1),
+      hue: state.timers.length % 6
+    });
     state.timers.push(t);
     document.getElementById('timers').appendChild(buildCard(t));
     updateCard(t);
     updateEmpty();
     save();
+    // new timers animate in, open ready to configure
+    els[t.id].card.classList.add('open', 'enter');
+    els[t.id].cfgBtn.textContent = 'settings ▴';
+    els[t.id].cfgBtn.setAttribute('aria-expanded', 'true');
     els[t.id].name.focus();
     els[t.id].name.select();
   });
@@ -1188,6 +1571,20 @@
     });
     save();
     state.timers.forEach(updateCard);
+  });
+
+  var menuBtn = document.getElementById('menuBtn');
+  var menuPanel = document.getElementById('menuPanel');
+  function applyMenu() {
+    menuPanel.hidden = !state.settings.menuOpen;
+    menuBtn.classList.toggle('active', state.settings.menuOpen);
+    menuBtn.setAttribute('aria-expanded', String(state.settings.menuOpen));
+  }
+  applyMenu();
+  menuBtn.addEventListener('click', function () {
+    state.settings.menuOpen = !state.settings.menuOpen;
+    save();
+    applyMenu();
   });
 
   var boardTitle = document.getElementById('boardTitle');
@@ -1280,16 +1677,20 @@
             if (wrap) document.body.insertBefore(wrap, pipNote);
             pipNote.hidden = true;
             var btn = document.getElementById('popoutBtn');
-            if (btn) btn.textContent = 'Pop out';
+            if (btn) { btn.classList.remove('active'); btn.title = 'Pop out: float above other windows'; }
             pipWindow = null;
           });
           var btn = win.document.getElementById('popoutBtn');
-          if (btn) btn.textContent = 'Pop back in';
+          if (btn) { btn.classList.add('active'); btn.title = 'Pop back into the main window'; }
         })
         .catch(function () {
           // browser refused (embedded context, policy, or no activation)
-          popoutBtn.textContent = 'Pop-out blocked';
-          setTimeout(function () { popoutBtn.textContent = 'Pop out'; }, 2000);
+          popoutBtn.classList.add('blocked');
+          popoutBtn.title = 'Pop-out blocked by this browser';
+          setTimeout(function () {
+            popoutBtn.classList.remove('blocked');
+            popoutBtn.title = 'Pop out: float above other windows';
+          }, 2000);
         });
     });
     document.getElementById('pipReturn').addEventListener('click', function () {
@@ -1336,6 +1737,7 @@
       volValue.textContent = Math.round(state.settings.volume * 100) + '%';
       chimeToggle.checked = state.settings.chime;
       applyBoardTitle();
+      applyMenu();
       refreshVoices();
       renderAll();
       save();

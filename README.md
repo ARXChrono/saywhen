@@ -1,9 +1,9 @@
 # saywhen
 
-Browser-based multi-timer app with text-to-speech alerts. Set a timer, type what it should say, and walk away: when time is up, your browser says it out loud.
+Browser-based multi-timer app with text-to-speech alerts. Name a timer, start it, and walk away: when time is up, your browser speaks the timer's name out loud.
 
-- Multiple independent timers, each with its own name, duration, and spoken message
-- **Once** mode (fires a single time) or **loop** mode (re-arms and repeats, with a fire counter)
+- Multiple independent timers, each with its own name and duration; the alert speaks the name
+- **Repeat** switch: off fires a single time, on re-arms and repeats (with a fire counter)
 - Microwave-style **+10s / +30s / +1m / +5m** buttons, which also extend a running countdown
 - Drift-free timing based on target timestamps, not tick counting
 - Voice picker, speech rate and volume sliders, and an optional chime before each announcement
