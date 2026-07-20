@@ -4,8 +4,10 @@ Browser-based multi-timer app with text-to-speech alerts. Set a timer, type what
 
 - Multiple independent timers, each with its own name, duration, and spoken message
 - **Once** mode (fires a single time) or **loop** mode (re-arms and repeats, with a fire counter)
+- Microwave-style **+10s / +30s / +1m / +5m** buttons, which also extend a running countdown
 - Drift-free timing based on target timestamps, not tick counting
-- Voice picker, speech rate slider, and an optional chime before each announcement
+- Voice picker, speech rate and volume sliders, and an optional chime before each announcement
+- **Pop out** button floats the whole app in an always-on-top window (Document Picture-in-Picture, Chromium browsers)
 - Everything saved to `localStorage`, plus JSON export/import for backups
 - No build step, no backend, no dependencies: one self-contained HTML file
 

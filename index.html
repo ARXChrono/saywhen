@@ -225,8 +225,13 @@
     font-variant-numeric: tabular-nums;
   }
   .duration input:disabled { opacity: 0.45; }
+  .duration input::-webkit-outer-spin-button,
+  .duration input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .duration input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
-  .presets { display: flex; gap: 0.35rem; }
+  .presets, .adders { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .adders .preset { color: var(--primary); border-color: var(--primary-dim); }
+  .adders .preset:hover:not(:disabled) { color: var(--ink); border-color: var(--primary); }
   .preset {
     appearance: none;
     border: 1px solid var(--border);
@@ -271,6 +276,15 @@
   }
   .timer.fired { animation: firePulse 900ms ease-out 2; }
 
+  .pip-note {
+    text-align: center;
+    color: var(--muted);
+    padding: 4rem 1.25rem;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+  .pip-note p { margin: 0 0 1rem; }
+
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
   }
@@ -291,6 +305,7 @@
       <p class="tag">timers that speak up</p>
     </div>
     <div class="header-actions">
+      <button class="btn" id="popoutBtn" type="button" title="Float saywhen above other windows">Pop out</button>
       <button class="btn" id="exportBtn" type="button">Export</button>
       <button class="btn" id="importBtn" type="button">Import</button>
       <input type="file" id="importFile" accept="application/json,.json" hidden>
@@ -306,6 +321,10 @@
       <input type="range" id="rateSlider" min="0.5" max="2" step="0.1" value="1">
       <output id="rateValue" for="rateSlider">1.0×</output>
     </label>
+    <label>Volume
+      <input type="range" id="volSlider" min="0" max="1" step="0.05" value="1">
+      <output id="volValue" for="volSlider">100%</output>
+    </label>
     <label>
       <input type="checkbox" id="chimeToggle" checked>
       Chime before speaking
@@ -319,17 +338,29 @@
   <p class="empty" id="empty" hidden>No timers. Hit <strong>+ Add timer</strong> to create one.</p>
 </div>
 
+<div class="pip-note" id="pipNote" hidden>
+  <p>saywhen is floating in a pop-out window.</p>
+  <button class="btn" id="pipReturn" type="button">Bring it back</button>
+</div>
+
 <script>
 (function () {
   'use strict';
 
   var STORAGE_KEY = 'saywhen:v1';
   var TICK_MS = 200;
+  var MAX_MS = 359999000; // 99:59:59
   var PRESETS = [
     { label: '30s', ms: 30000 },
     { label: '1m',  ms: 60000 },
     { label: '5m',  ms: 300000 },
     { label: '10m', ms: 600000 }
+  ];
+  var ADDERS = [
+    { label: '+10s', ms: 10000 },
+    { label: '+30s', ms: 30000 },
+    { label: '+1m',  ms: 60000 },
+    { label: '+5m',  ms: 300000 }
   ];
   var speechOK = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
 
@@ -356,7 +387,7 @@
 
   function defaultState() {
     return {
-      settings: { voiceURI: '', rate: 1, chime: true },
+      settings: { voiceURI: '', rate: 1, volume: 1, chime: true },
       timers: [makeTimer()]
     };
   }
@@ -368,17 +399,19 @@
       settings: {
         voiceURI: typeof s.voiceURI === 'string' ? s.voiceURI : '',
         rate: clampNum(s.rate, 0.5, 2, 1),
+        volume: clampNum(s.volume, 0, 1, 1),
         chime: s.chime !== false
       },
       timers: []
     };
     raw.timers.forEach(function (rt) {
       if (!rt || typeof rt !== 'object') return;
-      var dur = clampNum(rt.durationMs, 0, 359999000, 60000);
+      var dur = clampNum(rt.durationMs, 0, MAX_MS, 60000);
       var status = rt.status === 'paused' || rt.status === 'done' ? rt.status : 'idle';
       // never auto-resume: anything that was running comes back paused
       if (rt.status === 'running') status = 'paused';
-      var rem = clampNum(rt.remainingMs, 0, dur, dur);
+      // remaining may exceed duration when time was added mid-run
+      var rem = clampNum(rt.remainingMs, 0, MAX_MS, dur);
       if (status === 'idle') rem = dur;
       if (status === 'done') rem = 0;
       if (status === 'paused' && rem <= 0) { status = 'idle'; rem = dur; }
@@ -453,10 +486,11 @@
   }
 
   function chime() {
-    if (!audioCtx) return;
+    if (!audioCtx || state.settings.volume <= 0) return;
     try {
       if (audioCtx.state === 'suspended') audioCtx.resume();
       var now = audioCtx.currentTime;
+      var peak = 0.25 * state.settings.volume;
       [880, 1320].forEach(function (freq, i) {
         var osc = audioCtx.createOscillator();
         var gain = audioCtx.createGain();
@@ -464,7 +498,7 @@
         osc.frequency.value = freq;
         var t0 = now + i * 0.14;
         gain.gain.setValueAtTime(0.0001, t0);
-        gain.gain.exponentialRampToValueAtTime(0.25, t0 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.13);
         osc.connect(gain).connect(audioCtx.destination);
         osc.start(t0);
@@ -509,11 +543,13 @@
         if (voices[i].voiceURI === state.settings.voiceURI) { u.voice = voices[i]; break; }
       }
       u.rate = state.settings.rate;
+      u.volume = state.settings.volume;
       speechSynthesis.speak(u);
     } catch (e) { /* ignore */ }
   }
 
   function announce(text) {
+    if (state.settings.volume <= 0) return; // muted
     if (state.settings.chime) {
       chime();
       setTimeout(function () { speak(text); }, 300);
@@ -569,7 +605,8 @@
             '<label>min<input class="dur-m" type="number" min="0" max="59" inputmode="numeric" aria-label="Minutes"></label>' +
             '<label>sec<input class="dur-s" type="number" min="0" max="59" inputmode="numeric" aria-label="Seconds"></label>' +
           '</div>' +
-          '<div class="presets" role="group" aria-label="Quick durations"></div>' +
+          '<div class="presets" role="group" aria-label="Set duration"></div>' +
+          '<div class="adders" role="group" aria-label="Add time"></div>' +
         '</div>' +
         '<div class="mode-row">' +
           '<div class="segmented" role="radiogroup" aria-label="Timer mode">' +
@@ -596,6 +633,7 @@
       durM: card.querySelector('.dur-m'),
       durS: card.querySelector('.dur-s'),
       presets: card.querySelector('.presets'),
+      adders: card.querySelector('.adders'),
       modeRadios: card.querySelectorAll('input[type="radio"]'),
       modeHint: card.querySelector('.mode-hint'),
       msgInput: card.querySelector('.msg-input')
@@ -619,6 +657,16 @@
         setDuration(t, p.ms);
       });
       ref.presets.appendChild(b);
+    });
+
+    ADDERS.forEach(function (a) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'preset';
+      b.textContent = a.label;
+      b.setAttribute('aria-label', 'Add ' + a.label.slice(1));
+      b.addEventListener('click', function () { addTime(t, a.ms); });
+      ref.adders.appendChild(b);
     });
 
     // events
@@ -675,6 +723,21 @@
   }
 
   // ---------- timer actions ----------
+
+  // Microwave-style: extend a live countdown, or bump the set duration when idle.
+  function addTime(t, ms) {
+    if (t.status === 'running') {
+      var rt = runtime[t.id];
+      if (rt) rt.endTime = Math.min(rt.endTime + ms, Date.now() + MAX_MS);
+    } else if (t.status === 'paused') {
+      t.remainingMs = Math.min(t.remainingMs + ms, MAX_MS);
+    } else { // idle or done: grow the configured duration
+      setDuration(t, Math.min(t.durationMs + ms, MAX_MS));
+      return;
+    }
+    save();
+    updateCard(t);
+  }
 
   function toggleStart(t) {
     if (t.status === 'running') {
@@ -739,7 +802,7 @@
 
     ref.card.dataset.status = t.status;
     ref.clock.textContent = fmt(rem);
-    ref.barFill.style.width = (t.durationMs > 0 ? (rem / t.durationMs) * 100 : 0) + '%';
+    ref.barFill.style.width = Math.min(100, t.durationMs > 0 ? (rem / t.durationMs) * 100 : 0) + '%';
     ref.statusLabel.textContent = STATUS_TEXT[t.status] || '';
     ref.startBtn.textContent = running ? 'Pause' : (t.status === 'paused' ? 'Resume' : 'Start');
     ref.startBtn.disabled = t.durationMs <= 0;
@@ -822,6 +885,16 @@
     save();
   });
 
+  var volSlider = document.getElementById('volSlider');
+  var volValue = document.getElementById('volValue');
+  volSlider.value = state.settings.volume;
+  volValue.textContent = Math.round(state.settings.volume * 100) + '%';
+  volSlider.addEventListener('input', function () {
+    state.settings.volume = Number(volSlider.value);
+    volValue.textContent = Math.round(state.settings.volume * 100) + '%';
+    save();
+  });
+
   var chimeToggle = document.getElementById('chimeToggle');
   chimeToggle.checked = state.settings.chime;
   chimeToggle.addEventListener('change', function () {
@@ -848,6 +921,51 @@
     document.getElementById('speechWarn').hidden = false;
     document.getElementById('testBtn').disabled = true;
     document.getElementById('voiceSelect').disabled = true;
+  }
+
+  // ---------- pop-out (Document Picture-in-Picture: floats above all windows) ----------
+
+  var pipWindow = null;
+  var popoutBtn = document.getElementById('popoutBtn');
+  var pipNote = document.getElementById('pipNote');
+
+  if (!('documentPictureInPicture' in window)) {
+    popoutBtn.hidden = true;
+  } else {
+    popoutBtn.addEventListener('click', function () {
+      if (pipWindow) { pipWindow.close(); return; }
+      window.documentPictureInPicture.requestWindow({ width: 460, height: 640 })
+        .then(function (win) {
+          pipWindow = win;
+          win.document.title = 'saywhen';
+          // inline styles carry over by copying our single <style> block
+          document.querySelectorAll('style').forEach(function (s) {
+            var st = win.document.createElement('style');
+            st.textContent = s.textContent;
+            win.document.head.appendChild(st);
+          });
+          win.document.body.appendChild(document.querySelector('.wrap'));
+          pipNote.hidden = false;
+          win.addEventListener('pagehide', function () {
+            var wrap = win.document.querySelector('.wrap');
+            if (wrap) document.body.insertBefore(wrap, pipNote);
+            pipNote.hidden = true;
+            var btn = document.getElementById('popoutBtn');
+            if (btn) btn.textContent = 'Pop out';
+            pipWindow = null;
+          });
+          var btn = win.document.getElementById('popoutBtn');
+          if (btn) btn.textContent = 'Pop back in';
+        })
+        .catch(function () {
+          // browser refused (embedded context, policy, or no activation)
+          popoutBtn.textContent = 'Pop-out blocked';
+          setTimeout(function () { popoutBtn.textContent = 'Pop out'; }, 2000);
+        });
+    });
+    document.getElementById('pipReturn').addEventListener('click', function () {
+      if (pipWindow) pipWindow.close();
+    });
   }
 
   // ---------- export / import ----------
@@ -885,6 +1003,8 @@
       state = imported;
       rateSlider.value = state.settings.rate;
       rateValue.textContent = Number(state.settings.rate).toFixed(1) + '×';
+      volSlider.value = state.settings.volume;
+      volValue.textContent = Math.round(state.settings.volume * 100) + '%';
       chimeToggle.checked = state.settings.chime;
       refreshVoices();
       renderAll();
