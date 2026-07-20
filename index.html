@@ -129,6 +129,40 @@
   .voicebar .spacer { flex: 1; }
   .speech-warn { color: var(--accent); font-size: 0.85rem; }
 
+  /* ---------- Board title ---------- */
+  .board-title {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 0.3rem 0.5rem;
+    margin: -0.5rem 0 1rem -0.5rem;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    transition: border-color 150ms ease-out, background 150ms ease-out;
+  }
+  .board-title::placeholder { color: var(--muted); font-weight: 600; }
+  .board-title:hover { border-color: var(--border); }
+  .board-title:focus { border-color: var(--border); background: var(--bg); outline: none; }
+
+  /* ---------- All-timers bar ---------- */
+  .allbar[hidden] { display: none; }
+  .allbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: -0.75rem 0 1.25rem;
+  }
+  .allbar-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-right: 0.5rem;
+  }
+
   /* ---------- Timer grid ---------- */
   .timers {
     display: grid;
@@ -170,13 +204,50 @@
   .name:hover { border-color: var(--border); }
   .name:focus { border-color: var(--border); background: var(--bg); outline: none; }
 
-  .clock {
+  .clock, .clock-input {
+    display: block;
+    width: 100%;
     font-size: 3.4rem;
     font-weight: 700;
     letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
     line-height: 1.1;
     margin: 0.25rem 0 0.5rem;
+  }
+  .clock {
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--ink);
+    cursor: text;
+    text-align: left;
+    font-family: inherit;
+  }
+  .clock:hover .num { color: var(--primary-hover); }
+  .clock .unit {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-right: 0.45rem;
+  }
+  .clock .max {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin-left: 0.2rem;
+    letter-spacing: 0;
+  }
+  .clock-input[hidden] { display: none; }
+  .clock-input {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--primary);
+    border-radius: 0;
+    padding: 0;
+    color: var(--ink);
+    outline: none;
+    font-family: inherit;
   }
   .timer[data-status="paused"] .clock { color: var(--muted); }
   .timer[data-status="done"] .clock { color: var(--accent); }
@@ -206,28 +277,27 @@
   }
   .fires { font-variant-numeric: tabular-nums; }
   .timer[data-status="done"] .status-label { color: var(--accent); }
+  .meta-right { display: flex; align-items: center; gap: 0.6rem; }
+  .cycle-chip {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: var(--muted);
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    transition: color 150ms ease-out;
+  }
+  .cycle-chip:hover { color: var(--ink); }
+  .clock-input.cycle-edit { border-bottom-color: var(--accent); }
 
   .controls { display: flex; gap: 0.5rem; margin-bottom: 1.1rem; }
   .controls .start { min-width: 5.5rem; }
 
   .config { display: grid; gap: 0.8rem; border-top: 1px solid var(--border); padding-top: 1rem; }
 
-  .duration-row { display: flex; align-items: end; gap: 0.6rem; flex-wrap: wrap; }
-  .duration { display: flex; gap: 0.4rem; }
-  .duration label { display: grid; gap: 0.15rem; font-size: 0.72rem; color: var(--muted); }
-  .duration input {
-    width: 3.4rem;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0.35rem 0.4rem;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-  }
-  .duration input:disabled { opacity: 0.45; }
-  .duration input::-webkit-outer-spin-button,
-  .duration input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .duration input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+  .duration-row { display: flex; align-items: center; gap: 0.6rem 1rem; flex-wrap: wrap; }
 
   .presets, .adders { display: flex; gap: 0.35rem; flex-wrap: wrap; }
   .adders .preset { color: var(--primary); border-color: var(--primary-dim); }
@@ -259,6 +329,34 @@
   .segmented input { position: absolute; opacity: 0; pointer-events: none; }
   .segmented label:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: -2px; }
   .mode-hint { font-size: 0.78rem; color: var(--muted); }
+
+  .warn-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .warn-check { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+  .warn-row input[type="checkbox"] { accent-color: var(--primary); width: 1rem; height: 1rem; }
+  .warn-sec {
+    width: 3.2rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.25rem 0.4rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .warn-hint { color: var(--muted); opacity: 0.75; }
+
+  /* final-stretch state: inside the warning threshold */
+  @keyframes closingPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .timer.closing { border-color: var(--danger); }
+  .timer.closing .clock { color: var(--danger); animation: closingPulse 1s ease-in-out infinite; }
+  .timer.closing .bar-fill { background: var(--danger); }
+  .timer.closing .status-label { color: var(--danger); }
 
   .msg { display: grid; gap: 0.25rem; font-size: 0.78rem; color: var(--muted); }
   .msg input {
@@ -334,6 +432,16 @@
     <span class="speech-warn" id="speechWarn" hidden>Speech not supported in this browser</span>
   </section>
 
+  <input class="board-title" id="boardTitle" type="text" maxlength="80"
+         placeholder="Name this board…" aria-label="Board title">
+
+  <section class="allbar" id="allBar" aria-label="Controls for all timers" hidden>
+    <span class="allbar-label">All timers</span>
+    <button class="btn" id="startAllBtn" type="button">Start all</button>
+    <button class="btn" id="pauseAllBtn" type="button">Pause all</button>
+    <button class="btn" id="resetAllBtn" type="button">Reset all</button>
+  </section>
+
   <main class="timers" id="timers" aria-live="off"></main>
   <p class="empty" id="empty" hidden>No timers. Hit <strong>+ Add timer</strong> to create one.</p>
 </div>
@@ -379,7 +487,9 @@
       remainingMs: 60000,
       message: "Time's up.",
       status: 'idle',          // 'idle' | 'running' | 'paused' | 'done'
-      fireCount: 0
+      fireCount: 0,
+      warn: false,             // final-countdown warning enabled
+      warnSec: 20              // threshold in seconds: speak + flash + beep
     };
     if (overrides) for (var k in overrides) t[k] = overrides[k];
     return t;
@@ -387,7 +497,7 @@
 
   function defaultState() {
     return {
-      settings: { voiceURI: '', rate: 1, volume: 1, chime: true },
+      settings: { voiceURI: '', rate: 1, volume: 1, chime: true, boardTitle: '' },
       timers: [makeTimer()]
     };
   }
@@ -400,7 +510,8 @@
         voiceURI: typeof s.voiceURI === 'string' ? s.voiceURI : '',
         rate: clampNum(s.rate, 0.5, 2, 1),
         volume: clampNum(s.volume, 0, 1, 1),
-        chime: s.chime !== false
+        chime: s.chime !== false,
+        boardTitle: typeof s.boardTitle === 'string' ? s.boardTitle.slice(0, 80) : ''
       },
       timers: []
     };
@@ -423,7 +534,9 @@
         remainingMs: rem,
         message: typeof rt.message === 'string' ? rt.message.slice(0, 400) : '',
         status: status,
-        fireCount: clampNum(rt.fireCount, 0, 1e9, 0)
+        fireCount: clampNum(rt.fireCount, 0, 1e9, 0),
+        warn: rt.warn === true,
+        warnSec: clampNum(rt.warnSec, 1, 3600, 20)
       }));
     });
     return state;
@@ -476,7 +589,6 @@
 
   var audioCtx = null;
   function ensureAudio() {
-    if (!state.settings.chime) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
@@ -504,6 +616,26 @@
         osc.start(t0);
         osc.stop(t0 + 0.15);
       });
+    } catch (e) { /* ignore */ }
+  }
+
+  // short tick used in the final stretch; pitch rises as closeness -> 1
+  function beepTick(closeness) {
+    if (!audioCtx || state.settings.volume <= 0) return;
+    try {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var t0 = audioCtx.currentTime;
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 700 + 500 * Math.max(0, Math.min(1, closeness));
+      var peak = 0.12 * state.settings.volume;
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(peak, t0 + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.09);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(t0);
+      osc.stop(t0 + 0.1);
     } catch (e) { /* ignore */ }
   }
 
@@ -560,22 +692,61 @@
 
   // ---------- time formatting ----------
 
+  function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
   function fmt(ms) {
     var total = Math.ceil(Math.max(0, ms) / 1000);
     var h = Math.floor(total / 3600);
     var m = Math.floor((total % 3600) / 60);
     var s = total % 60;
-    var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
-    return h > 0 ? h + ':' + pad(m) + ':' + pad(s) : m + ':' + pad(s);
+    return h > 0 ? h + ':' + pad2(m) + ':' + pad2(s) : m + ':' + pad2(s);
   }
 
-  function splitDuration(ms) {
-    var total = Math.round(ms / 1000);
-    return {
-      h: Math.floor(total / 3600),
-      m: Math.floor((total % 3600) / 60),
-      s: total % 60
-    };
+  // compact form for captions: 60m / 1h 05m / 45s
+  function fmtShort(ms) {
+    var total = Math.round(Math.max(0, ms) / 1000);
+    var h = Math.floor(total / 3600);
+    var m = Math.floor((total % 3600) / 60);
+    var s = total % 60;
+    var out = [];
+    if (h) out.push(h + 'h');
+    if (m) out.push(m + 'm');
+    if (s || !out.length) out.push(s + 's');
+    return out.join(' ');
+  }
+
+  // big display with unit labels: 1h 02m 30s / 7m 23s / 45s.
+  // maxMs (optional) renders a "/ 60m" cycle caption after the digits.
+  function renderClock(el, ms, maxMs) {
+    var total = Math.ceil(Math.max(0, ms) / 1000);
+    var h = Math.floor(total / 3600);
+    var m = Math.floor((total % 3600) / 60);
+    var s = total % 60;
+    var parts = h > 0 ? [[h, 'h'], [pad2(m), 'm'], [pad2(s), 's']]
+              : m > 0 ? [[m, 'm'], [pad2(s), 's']]
+              : [[s, 's']];
+    var html = parts.map(function (p) {
+      return '<span class="num">' + p[0] + '</span><span class="unit">' + p[1] + '</span>';
+    }).join('');
+    if (maxMs != null) html += '<span class="max" title="Full cycle length">/ ' + fmtShort(maxMs) + '</span>';
+    el.innerHTML = html;
+  }
+
+  // accepts "7:30", "1:05:00", "730" (microwave: last two digits are seconds), "90" -> 1m 30s
+  function parseClock(str) {
+    str = String(str || '').trim();
+    if (!str || /[^\d:.\s]/.test(str)) return null;
+    var parts = str.split(/[:.\s]+/).filter(function (p) { return p.length; });
+    if (!parts.length || parts.length > 3) return null;
+    var secs = 0;
+    if (parts.length === 1) {
+      var d = parts[0];
+      secs = Number(d.slice(0, -4) || 0) * 3600 + Number(d.slice(-4, -2) || 0) * 60 + Number(d.slice(-2));
+    } else {
+      for (var i = 0; i < parts.length; i++) secs = secs * 60 + Number(parts[i]);
+    }
+    if (!isFinite(secs)) return null;
+    return Math.max(0, Math.min(secs * 1000, MAX_MS));
   }
 
   // ---------- timer card DOM ----------
@@ -585,26 +756,25 @@
     card.className = 'timer';
     card.dataset.id = t.id;
 
-    var d = splitDuration(t.durationMs);
     card.innerHTML =
       '<div class="timer-top">' +
         '<input class="name" aria-label="Timer name" maxlength="80">' +
         '<button class="icon-btn delete" type="button" aria-label="Delete timer">✕</button>' +
       '</div>' +
-      '<div class="clock" role="timer"></div>' +
+      '<button class="clock" type="button" title="Click to type a time"></button>' +
+      '<input class="clock-input" inputmode="numeric" aria-label="Type a time, like 7:30 or 730" hidden>' +
       '<div class="bar" aria-hidden="true"><div class="bar-fill"></div></div>' +
-      '<div class="meta"><span class="status-label"></span><span class="fires" hidden></span></div>' +
+      '<div class="meta"><span class="status-label"></span><span class="meta-right">' +
+        '<button class="cycle-chip" type="button" title="Click to set the cycle length"></button>' +
+        '<span class="fires" hidden></span>' +
+      '</span></div>' +
       '<div class="controls">' +
         '<button class="btn primary start" type="button">Start</button>' +
+        '<button class="btn resync" type="button" title="Set where the countdown is right now">Resync</button>' +
         '<button class="btn reset" type="button">Reset</button>' +
       '</div>' +
       '<div class="config">' +
         '<div class="duration-row">' +
-          '<div class="duration">' +
-            '<label>hr<input class="dur-h" type="number" min="0" max="99" inputmode="numeric" aria-label="Hours"></label>' +
-            '<label>min<input class="dur-m" type="number" min="0" max="59" inputmode="numeric" aria-label="Minutes"></label>' +
-            '<label>sec<input class="dur-s" type="number" min="0" max="59" inputmode="numeric" aria-label="Seconds"></label>' +
-          '</div>' +
           '<div class="presets" role="group" aria-label="Set duration"></div>' +
           '<div class="adders" role="group" aria-label="Add time"></div>' +
         '</div>' +
@@ -615,6 +785,11 @@
           '</div>' +
           '<span class="mode-hint"></span>' +
         '</div>' +
+        '<div class="warn-row">' +
+          '<label class="warn-check"><input class="warn-input" type="checkbox"> warn at</label>' +
+          '<input class="warn-sec" type="text" inputmode="numeric" maxlength="4" aria-label="Warning threshold in seconds">' +
+          '<span class="warn-tail">sec left <span class="warn-hint">· speaks, flashes red, beeps near zero</span></span>' +
+        '</div>' +
         '<label class="msg">Say this when time is up' +
           '<input class="msg-input" type="text" maxlength="400" placeholder="e.g. Check the oven">' +
         '</label>' +
@@ -624,27 +799,28 @@
       card: card,
       name: card.querySelector('.name'),
       clock: card.querySelector('.clock'),
+      clockInput: card.querySelector('.clock-input'),
       barFill: card.querySelector('.bar-fill'),
       statusLabel: card.querySelector('.status-label'),
+      cycleChip: card.querySelector('.cycle-chip'),
       fires: card.querySelector('.fires'),
       startBtn: card.querySelector('.start'),
+      resyncBtn: card.querySelector('.resync'),
       resetBtn: card.querySelector('.reset'),
-      durH: card.querySelector('.dur-h'),
-      durM: card.querySelector('.dur-m'),
-      durS: card.querySelector('.dur-s'),
       presets: card.querySelector('.presets'),
       adders: card.querySelector('.adders'),
       modeRadios: card.querySelectorAll('input[type="radio"]'),
       modeHint: card.querySelector('.mode-hint'),
+      warnInput: card.querySelector('.warn-input'),
+      warnSec: card.querySelector('.warn-sec'),
       msgInput: card.querySelector('.msg-input')
     };
     els[t.id] = ref;
 
     ref.name.value = t.name;
-    ref.durH.value = d.h;
-    ref.durM.value = d.m;
-    ref.durS.value = d.s;
     ref.msgInput.value = t.message;
+    ref.warnInput.checked = t.warn;
+    ref.warnSec.value = t.warnSec;
     ref.modeRadios.forEach(function (r) { r.checked = r.value === t.mode; });
 
     PRESETS.forEach(function (p) {
@@ -680,8 +856,67 @@
     });
     ref.startBtn.addEventListener('click', function () { toggleStart(t); });
     ref.resetBtn.addEventListener('click', function () { resetTimer(t); });
-    [ref.durH, ref.durM, ref.durS].forEach(function (inp) {
-      inp.addEventListener('change', function () { readDurationInputs(t); });
+
+    // The clock editor has two explicit modes:
+    //   'current' — set where the countdown is right now (cycle untouched)
+    //   'cycle'   — set the full cycle length (live countdown untouched)
+    function openClockEdit(mode) {
+      ref.editing = true;
+      ref.editMode = mode;
+      ref.clock.hidden = true;
+      ref.clockInput.hidden = false;
+      ref.clockInput.classList.toggle('cycle-edit', mode === 'cycle');
+      var rt = runtime[t.id];
+      ref.clockInput.value = fmt(
+        mode === 'cycle' ? t.durationMs
+        : t.status === 'running' && rt ? Math.max(0, rt.endTime - Date.now())
+        : t.remainingMs
+      );
+      ref.clockInput.focus();
+      ref.clockInput.select();
+    }
+    function closeClockEdit(commit, refocus) {
+      if (!ref.editing) return;
+      ref.editing = false;
+      ref.clockInput.hidden = true;
+      ref.clock.hidden = false;
+      if (commit) {
+        var ms = parseClock(ref.clockInput.value);
+        if (ms !== null) {
+          if (ref.editMode === 'cycle') {
+            if (t.status === 'running' || t.status === 'paused') {
+              t.durationMs = ms; // live countdown keeps going; next re-arm uses this
+              save();
+            } else {
+              setDuration(t, ms);
+            }
+          } else { // current
+            if (t.status === 'running') {
+              var rt = runtime[t.id];
+              if (rt) rt.endTime = Date.now() + ms;
+            } else if (t.status === 'done' && ms > 0) {
+              t.status = 'paused'; // resynced a finished timer: ready to resume
+            }
+            t.remainingMs = ms;
+            save();
+          }
+        }
+      }
+      updateCard(t);
+      if (refocus) ref.clock.focus();
+    }
+    // clicking the big clock: live timers edit the current round, fresh ones the cycle
+    ref.clock.addEventListener('click', function () {
+      openClockEdit(t.status === 'running' || t.status === 'paused' ? 'current' : 'cycle');
+    });
+    ref.resyncBtn.addEventListener('click', function () { openClockEdit('current'); });
+    ref.cycleChip.addEventListener('click', function () { openClockEdit('cycle'); });
+    ref.clockInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); closeClockEdit(true, true); }
+      else if (e.key === 'Escape') { closeClockEdit(false, true); }
+    });
+    ref.clockInput.addEventListener('blur', function () {
+      closeClockEdit(true, false); // click-away commits
     });
     ref.modeRadios.forEach(function (r) {
       r.addEventListener('change', function () {
@@ -696,6 +931,18 @@
       t.message = ref.msgInput.value;
       save();
     });
+    ref.warnInput.addEventListener('change', function () {
+      t.warn = ref.warnInput.checked;
+      save();
+      updateCard(t);
+    });
+    ref.warnSec.addEventListener('change', function () {
+      var v = clampNum(parseInt(ref.warnSec.value, 10), 1, 3600, 20);
+      ref.warnSec.value = v;
+      t.warnSec = v;
+      save();
+      updateCard(t);
+    });
 
     return card;
   }
@@ -704,22 +951,8 @@
     t.durationMs = ms;
     t.remainingMs = ms;
     if (t.status !== 'running') t.status = 'idle';
-    var ref = els[t.id];
-    var d = splitDuration(ms);
-    ref.durH.value = d.h;
-    ref.durM.value = d.m;
-    ref.durS.value = d.s;
     save();
     updateCard(t);
-  }
-
-  function readDurationInputs(t) {
-    var ref = els[t.id];
-    var h = clampNum(ref.durH.value, 0, 99, 0);
-    var m = clampNum(ref.durM.value, 0, 59, 0);
-    var s = clampNum(ref.durS.value, 0, 59, 0);
-    ref.durH.value = h; ref.durM.value = m; ref.durS.value = s;
-    setDuration(t, (h * 3600 + m * 60 + s) * 1000);
   }
 
   // ---------- timer actions ----------
@@ -739,21 +972,29 @@
     updateCard(t);
   }
 
+  function pauseTimer(t) {
+    var rt = runtime[t.id];
+    t.remainingMs = rt ? Math.max(0, rt.endTime - Date.now()) : t.remainingMs;
+    delete runtime[t.id];
+    t.status = 'paused';
+  }
+
+  function startTimer(t) {
+    if (t.durationMs <= 0) return;
+    if (t.status === 'done' || t.remainingMs <= 0) {
+      t.remainingMs = t.durationMs;
+      if (t.mode === 'once') t.fireCount = 0; // fresh run, fresh count
+    }
+    runtime[t.id] = { endTime: Date.now() + t.remainingMs };
+    t.status = 'running';
+  }
+
   function toggleStart(t) {
     if (t.status === 'running') {
-      var rt = runtime[t.id];
-      t.remainingMs = rt ? Math.max(0, rt.endTime - Date.now()) : t.remainingMs;
-      delete runtime[t.id];
-      t.status = 'paused';
+      pauseTimer(t);
     } else {
-      if (t.durationMs <= 0) return;
-      if (t.status === 'done' || t.remainingMs <= 0) {
-        t.remainingMs = t.durationMs;
-        if (t.mode === 'once') t.fireCount = 0; // fresh run, fresh count
-      }
       ensureAudio(); // user gesture: unlock audio for the eventual chime
-      runtime[t.id] = { endTime: Date.now() + t.remainingMs };
-      t.status = 'running';
+      startTimer(t);
     }
     save();
     updateCard(t);
@@ -801,23 +1042,43 @@
       : t.remainingMs;
 
     ref.card.dataset.status = t.status;
-    ref.clock.textContent = fmt(rem);
+    // final stretch: inside the warning threshold while running
+    var closing = t.warn && running && rem > 0 && rem <= t.warnSec * 1000;
+    ref.card.classList.toggle('closing', closing);
+    // show "/ cycle" whenever the countdown differs from the full duration
+    renderClock(ref.clock, rem, rem !== t.durationMs ? t.durationMs : null);
+    ref.clock.title = t.status === 'running' || t.status === 'paused'
+      ? 'Click to resync this round (cycle stays ' + fmt(t.durationMs) + ')'
+      : 'Click to type a time';
     ref.barFill.style.width = Math.min(100, t.durationMs > 0 ? (rem / t.durationMs) * 100 : 0) + '%';
-    ref.statusLabel.textContent = STATUS_TEXT[t.status] || '';
+    ref.statusLabel.textContent = closing ? 'Ending soon' : (STATUS_TEXT[t.status] || '');
     ref.startBtn.textContent = running ? 'Pause' : (t.status === 'paused' ? 'Resume' : 'Start');
     ref.startBtn.disabled = t.durationMs <= 0;
 
     var showFires = t.mode === 'loop' || (t.mode === 'once' && t.status === 'done');
+    ref.cycleChip.hidden = t.mode !== 'loop';
+    ref.cycleChip.textContent = 'cycle ' + fmtShort(t.durationMs);
     ref.fires.hidden = !(showFires && t.fireCount > 0);
     ref.fires.textContent = 'fired ×' + t.fireCount;
     ref.modeHint.textContent = t.mode === 'loop' ? 'repeats until paused' : 'fires a single time';
 
-    [ref.durH, ref.durM, ref.durS].forEach(function (i) { i.disabled = running; });
     ref.presets.querySelectorAll('.preset').forEach(function (b) { b.disabled = running; });
+    updateAllBar();
   }
 
   function updateEmpty() {
     document.getElementById('empty').hidden = state.timers.length > 0;
+    updateAllBar();
+  }
+
+  function updateAllBar() {
+    if (!allBar) return;
+    allBar.hidden = state.timers.length < 2;
+    startAllBtn.disabled = !state.timers.some(function (t) { return t.status !== 'running' && t.durationMs > 0; });
+    pauseAllBtn.disabled = !state.timers.some(function (t) { return t.status === 'running'; });
+    resetAllBtn.disabled = !state.timers.some(function (t) {
+      return t.status !== 'idle' || t.remainingMs !== t.durationMs || t.fireCount > 0;
+    });
   }
 
   function renderAll() {
@@ -833,6 +1094,15 @@
 
   // ---------- tick ----------
 
+  // "20 seconds" / "2 minutes" for the spoken warning
+  function speakableThreshold(sec) {
+    if (sec >= 60 && sec % 60 === 0) {
+      var m = sec / 60;
+      return m + (m === 1 ? ' minute' : ' minutes');
+    }
+    return sec + ' seconds';
+  }
+
   setInterval(function () {
     var now = Date.now();
     state.timers.forEach(function (t) {
@@ -840,6 +1110,22 @@
       var rt = runtime[t.id];
       if (!rt) { t.status = 'paused'; updateCard(t); return; }
       var rem = rt.endTime - now;
+      if (t.warn && rem > 500 && state.settings.volume > 0) {
+        var thrMs = t.warnSec * 1000;
+        // spoken reminder: fires once, when the countdown crosses the threshold
+        var last = rt.lastRem != null ? rt.lastRem : rem;
+        if (last > thrMs && rem <= thrMs) speak(speakableThreshold(t.warnSec) + ' until ' + t.name);
+        // beeping in the final stretch (last 10s, or the whole threshold if shorter)
+        var beepWin = Math.min(thrMs, 10000);
+        if (rem <= beepWin) {
+          var sec = Math.ceil(rem / 1000);
+          if (rt.lastBeepSec !== sec) {
+            rt.lastBeepSec = sec;
+            beepTick(1 - rem / beepWin);
+          }
+        }
+      }
+      rt.lastRem = rem;
       if (rem <= 0) {
         t.fireCount++;
         fire(t);
@@ -849,6 +1135,8 @@
           var end = rt.endTime + t.durationMs;
           if (end <= now) end = now + t.durationMs;
           rt.endTime = end;
+          rt.lastRem = end - now; // fresh round: don't misread the jump as a crossing
+          rt.lastBeepSec = null;
         } else {
           delete runtime[t.id];
           t.status = 'done';
@@ -873,6 +1161,47 @@
     save();
     els[t.id].name.focus();
     els[t.id].name.select();
+  });
+
+  var allBar = document.getElementById('allBar');
+  var startAllBtn = document.getElementById('startAllBtn');
+  var pauseAllBtn = document.getElementById('pauseAllBtn');
+  var resetAllBtn = document.getElementById('resetAllBtn');
+
+  startAllBtn.addEventListener('click', function () {
+    ensureAudio(); // user gesture: unlock audio for the eventual chimes
+    state.timers.forEach(function (t) { if (t.status !== 'running') startTimer(t); });
+    save();
+    state.timers.forEach(updateCard);
+  });
+  pauseAllBtn.addEventListener('click', function () {
+    state.timers.forEach(function (t) { if (t.status === 'running') pauseTimer(t); });
+    save();
+    state.timers.forEach(updateCard);
+  });
+  resetAllBtn.addEventListener('click', function () {
+    state.timers.forEach(function (t) {
+      delete runtime[t.id];
+      t.status = 'idle';
+      t.remainingMs = t.durationMs;
+      t.fireCount = 0;
+    });
+    save();
+    state.timers.forEach(updateCard);
+  });
+
+  var boardTitle = document.getElementById('boardTitle');
+  function applyBoardTitle() {
+    boardTitle.value = state.settings.boardTitle;
+    document.title = state.settings.boardTitle
+      ? state.settings.boardTitle + ' — saywhen'
+      : 'saywhen — timers that speak up';
+  }
+  applyBoardTitle();
+  boardTitle.addEventListener('change', function () {
+    state.settings.boardTitle = boardTitle.value.trim().slice(0, 80);
+    save();
+    applyBoardTitle();
   });
 
   var rateSlider = document.getElementById('rateSlider');
@@ -1006,6 +1335,7 @@
       volSlider.value = state.settings.volume;
       volValue.textContent = Math.round(state.settings.volume * 100) + '%';
       chimeToggle.checked = state.settings.chime;
+      applyBoardTitle();
       refreshVoices();
       renderAll();
       save();
