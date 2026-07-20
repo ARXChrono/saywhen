@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="saywhen — browser timers that speak up. Multiple drift-free timers with text-to-speech alerts.">
+<title>saywhen — timers that speak up</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏱</text></svg>">
+<style>
+  :root {
+    --bg: oklch(0.12 0 0);
+    --surface: oklch(0.17 0.01 210);
+    --surface-2: oklch(0.21 0.012 210);
+    --border: oklch(0.30 0.012 210);
+    --ink: oklch(0.94 0.005 210);
+    --muted: oklch(0.70 0.02 210);
+    --primary: oklch(0.65 0.10 200);
+    --primary-hover: oklch(0.70 0.11 200);
+    --primary-dim: oklch(0.40 0.06 200);
+    --accent: oklch(0.80 0.14 75);
+    --danger: oklch(0.62 0.16 25);
+    --radius: 10px;
+    --z-toast: 10;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  button, input, select { font: inherit; color: inherit; }
+
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* ---------- Header ---------- */
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    padding: 2rem 0 1.25rem;
+  }
+  .brand { display: flex; align-items: baseline; gap: 0.75rem; }
+  h1 {
+    margin: 0;
+    font-size: 1.55rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  h1 .dot { color: var(--primary); }
+  .tag { margin: 0; color: var(--muted); font-size: 0.9rem; }
+
+  .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: var(--radius);
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 150ms ease-out, border-color 150ms ease-out;
+  }
+  .btn:hover { background: var(--surface-2); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn.primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: oklch(0.99 0 0);
+  }
+  .btn.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+
+  .icon-btn {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 6px;
+    width: 2rem;
+    height: 2rem;
+    line-height: 1;
+    font-size: 1rem;
+    transition: color 150ms ease-out, background 150ms ease-out;
+  }
+  .icon-btn:hover { color: var(--danger); background: var(--surface-2); }
+
+  /* ---------- Voice bar ---------- */
+  .voicebar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.75rem;
+  }
+  .voicebar label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); }
+  .voicebar select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.35rem 0.5rem;
+    max-width: 15rem;
+  }
+  .voicebar input[type="range"] { accent-color: var(--primary); width: 7rem; }
+  .voicebar input[type="checkbox"] { accent-color: var(--primary); width: 1rem; height: 1rem; }
+  .voicebar output { font-variant-numeric: tabular-nums; color: var(--ink); min-width: 2.4em; }
+  .voicebar .spacer { flex: 1; }
+  .speech-warn { color: var(--accent); font-size: 0.85rem; }
+
+  /* ---------- Timer grid ---------- */
+  .timers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.25rem;
+    align-items: start;
+  }
+  .timers:not(:has(.timer)) { display: block; }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 4rem 1rem;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+  }
+
+  /* ---------- Timer card ---------- */
+  .timer {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem 1.25rem;
+  }
+  .timer[data-status="done"] { border-color: var(--accent); }
+
+  .timer-top { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
+  .name {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 0.2rem 0.4rem;
+    margin-left: -0.4rem;
+    font-weight: 600;
+    transition: border-color 150ms ease-out, background 150ms ease-out;
+  }
+  .name:hover { border-color: var(--border); }
+  .name:focus { border-color: var(--border); background: var(--bg); outline: none; }
+
+  .clock {
+    font-size: 3.4rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    margin: 0.25rem 0 0.5rem;
+  }
+  .timer[data-status="paused"] .clock { color: var(--muted); }
+  .timer[data-status="done"] .clock { color: var(--accent); }
+
+  .bar {
+    height: 4px;
+    background: var(--surface-2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.6rem;
+  }
+  .bar-fill {
+    height: 100%;
+    width: 100%;
+    background: var(--primary);
+    border-radius: 2px;
+    transition: width 200ms linear;
+  }
+  .timer[data-status="done"] .bar-fill { background: var(--accent); }
+
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 0.9rem;
+  }
+  .fires { font-variant-numeric: tabular-nums; }
+  .timer[data-status="done"] .status-label { color: var(--accent); }
+
+  .controls { display: flex; gap: 0.5rem; margin-bottom: 1.1rem; }
+  .controls .start { min-width: 5.5rem; }
+
+  .config { display: grid; gap: 0.8rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+
+  .duration-row { display: flex; align-items: end; gap: 0.6rem; flex-wrap: wrap; }
+  .duration { display: flex; gap: 0.4rem; }
+  .duration label { display: grid; gap: 0.15rem; font-size: 0.72rem; color: var(--muted); }
+  .duration input {
+    width: 3.4rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.35rem 0.4rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .duration input:disabled { opacity: 0.45; }
+
+  .presets { display: flex; gap: 0.35rem; }
+  .preset {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: color 150ms ease-out, border-color 150ms ease-out;
+  }
+  .preset:hover:not(:disabled) { color: var(--ink); border-color: var(--primary-dim); }
+  .preset:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .mode-row { display: flex; align-items: center; gap: 0.75rem; }
+  .segmented { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .segmented label {
+    padding: 0.32rem 0.85rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 150ms ease-out, color 150ms ease-out;
+  }
+  .segmented label:has(:checked) { background: var(--primary-dim); color: var(--ink); }
+  .segmented input { position: absolute; opacity: 0; pointer-events: none; }
+  .segmented label:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: -2px; }
+  .mode-hint { font-size: 0.78rem; color: var(--muted); }
+
+  .msg { display: grid; gap: 0.25rem; font-size: 0.78rem; color: var(--muted); }
+  .msg input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.45rem 0.6rem;
+    width: 100%;
+  }
+
+  /* fire flash */
+  @keyframes firePulse {
+    0% { box-shadow: 0 0 0 0 oklch(0.80 0.14 75 / 0.55); }
+    100% { box-shadow: 0 0 0 18px oklch(0.80 0.14 75 / 0); }
+  }
+  .timer.fired { animation: firePulse 900ms ease-out 2; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  @media (max-width: 480px) {
+    .clock { font-size: 2.8rem; }
+    .voicebar select { max-width: 100%; flex: 1; }
+    .voicebar label { width: 100%; }
+    .voicebar .spacer { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>saywhen<span class="dot">.</span></h1>
+      <p class="tag">timers that speak up</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="exportBtn" type="button">Export</button>
+      <button class="btn" id="importBtn" type="button">Import</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <button class="btn primary" id="addBtn" type="button">+ Add timer</button>
+    </div>
+  </header>
+
+  <section class="voicebar" aria-label="Voice settings">
+    <label>Voice
+      <select id="voiceSelect" aria-label="Speech voice"></select>
+    </label>
+    <label>Rate
+      <input type="range" id="rateSlider" min="0.5" max="2" step="0.1" value="1">
+      <output id="rateValue" for="rateSlider">1.0×</output>
+    </label>
+    <label>
+      <input type="checkbox" id="chimeToggle" checked>
+      Chime before speaking
+    </label>
+    <span class="spacer"></span>
+    <button class="btn" id="testBtn" type="button">Test voice</button>
+    <span class="speech-warn" id="speechWarn" hidden>Speech not supported in this browser</span>
+  </section>
+
+  <main class="timers" id="timers" aria-live="off"></main>
+  <p class="empty" id="empty" hidden>No timers. Hit <strong>+ Add timer</strong> to create one.</p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var STORAGE_KEY = 'saywhen:v1';
+  var TICK_MS = 200;
+  var PRESETS = [
+    { label: '30s', ms: 30000 },
+    { label: '1m',  ms: 60000 },
+    { label: '5m',  ms: 300000 },
+    { label: '10m', ms: 600000 }
+  ];
+  var speechOK = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+
+  // ---------- state ----------
+
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  function makeTimer(overrides) {
+    var t = {
+      id: uid(),
+      name: 'Timer',
+      mode: 'once',            // 'once' | 'loop'
+      durationMs: 60000,
+      remainingMs: 60000,
+      message: "Time's up.",
+      status: 'idle',          // 'idle' | 'running' | 'paused' | 'done'
+      fireCount: 0
+    };
+    if (overrides) for (var k in overrides) t[k] = overrides[k];
+    return t;
+  }
+
+  function defaultState() {
+    return {
+      settings: { voiceURI: '', rate: 1, chime: true },
+      timers: [makeTimer()]
+    };
+  }
+
+  function sanitize(raw) {
+    if (!raw || typeof raw !== 'object' || !Array.isArray(raw.timers)) return null;
+    var s = raw.settings && typeof raw.settings === 'object' ? raw.settings : {};
+    var state = {
+      settings: {
+        voiceURI: typeof s.voiceURI === 'string' ? s.voiceURI : '',
+        rate: clampNum(s.rate, 0.5, 2, 1),
+        chime: s.chime !== false
+      },
+      timers: []
+    };
+    raw.timers.forEach(function (rt) {
+      if (!rt || typeof rt !== 'object') return;
+      var dur = clampNum(rt.durationMs, 0, 359999000, 60000);
+      var status = rt.status === 'paused' || rt.status === 'done' ? rt.status : 'idle';
+      // never auto-resume: anything that was running comes back paused
+      if (rt.status === 'running') status = 'paused';
+      var rem = clampNum(rt.remainingMs, 0, dur, dur);
+      if (status === 'idle') rem = dur;
+      if (status === 'done') rem = 0;
+      if (status === 'paused' && rem <= 0) { status = 'idle'; rem = dur; }
+      state.timers.push(makeTimer({
+        id: typeof rt.id === 'string' && rt.id ? rt.id : uid(),
+        name: typeof rt.name === 'string' ? rt.name.slice(0, 80) : 'Timer',
+        mode: rt.mode === 'loop' ? 'loop' : 'once',
+        durationMs: dur,
+        remainingMs: rem,
+        message: typeof rt.message === 'string' ? rt.message.slice(0, 400) : '',
+        status: status,
+        fireCount: clampNum(rt.fireCount, 0, 1e9, 0)
+      }));
+    });
+    return state;
+  }
+
+  function clampNum(v, min, max, fallback) {
+    v = Number(v);
+    if (!isFinite(v)) return fallback;
+    return Math.min(max, Math.max(min, v));
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultState();
+      return sanitize(JSON.parse(raw)) || defaultState();
+    } catch (e) {
+      return defaultState();
+    }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(serialize()));
+    } catch (e) { /* storage unavailable — run in-memory only */ }
+  }
+
+  // Serialize with running timers frozen as paused at their current remaining.
+  function serialize() {
+    return {
+      settings: state.settings,
+      timers: state.timers.map(function (t) {
+        var copy = {};
+        for (var k in t) copy[k] = t[k];
+        if (t.status === 'running') {
+          var rt = runtime[t.id];
+          copy.status = 'paused';
+          copy.remainingMs = rt ? Math.max(0, rt.endTime - Date.now()) : t.remainingMs;
+        }
+        return copy;
+      })
+    };
+  }
+
+  var state = load();
+  var runtime = {};   // id -> { endTime }
+  var els = {};       // id -> element refs
+
+  // ---------- audio ----------
+
+  var audioCtx = null;
+  function ensureAudio() {
+    if (!state.settings.chime) return;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!audioCtx) audioCtx = new AC();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (e) { /* no audio */ }
+  }
+
+  function chime() {
+    if (!audioCtx) return;
+    try {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var now = audioCtx.currentTime;
+      [880, 1320].forEach(function (freq, i) {
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        var t0 = now + i * 0.14;
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(0.25, t0 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.13);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(t0);
+        osc.stop(t0 + 0.15);
+      });
+    } catch (e) { /* ignore */ }
+  }
+
+  // ---------- speech ----------
+
+  var voices = [];
+
+  function refreshVoices() {
+    if (!speechOK) return;
+    voices = speechSynthesis.getVoices().slice();
+    voices.sort(function (a, b) {
+      if (a.default !== b.default) return a.default ? -1 : 1;
+      if (a.localService !== b.localService) return a.localService ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+    var sel = document.getElementById('voiceSelect');
+    sel.innerHTML = '';
+    var def = document.createElement('option');
+    def.value = '';
+    def.textContent = voices.length ? 'System default' : 'No voices available';
+    sel.appendChild(def);
+    voices.forEach(function (v) {
+      var opt = document.createElement('option');
+      opt.value = v.voiceURI;
+      opt.textContent = v.name + ' (' + v.lang + ')';
+      sel.appendChild(opt);
+    });
+    sel.value = state.settings.voiceURI;
+    if (sel.value !== state.settings.voiceURI) sel.value = '';
+  }
+
+  function speak(text) {
+    if (!speechOK || !text) return;
+    try {
+      var u = new SpeechSynthesisUtterance(text);
+      for (var i = 0; i < voices.length; i++) {
+        if (voices[i].voiceURI === state.settings.voiceURI) { u.voice = voices[i]; break; }
+      }
+      u.rate = state.settings.rate;
+      speechSynthesis.speak(u);
+    } catch (e) { /* ignore */ }
+  }
+
+  function announce(text) {
+    if (state.settings.chime) {
+      chime();
+      setTimeout(function () { speak(text); }, 300);
+    } else {
+      speak(text);
+    }
+  }
+
+  // ---------- time formatting ----------
+
+  function fmt(ms) {
+    var total = Math.ceil(Math.max(0, ms) / 1000);
+    var h = Math.floor(total / 3600);
+    var m = Math.floor((total % 3600) / 60);
+    var s = total % 60;
+    var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+    return h > 0 ? h + ':' + pad(m) + ':' + pad(s) : m + ':' + pad(s);
+  }
+
+  function splitDuration(ms) {
+    var total = Math.round(ms / 1000);
+    return {
+      h: Math.floor(total / 3600),
+      m: Math.floor((total % 3600) / 60),
+      s: total % 60
+    };
+  }
+
+  // ---------- timer card DOM ----------
+
+  function buildCard(t) {
+    var card = document.createElement('article');
+    card.className = 'timer';
+    card.dataset.id = t.id;
+
+    var d = splitDuration(t.durationMs);
+    card.innerHTML =
+      '<div class="timer-top">' +
+        '<input class="name" aria-label="Timer name" maxlength="80">' +
+        '<button class="icon-btn delete" type="button" aria-label="Delete timer">✕</button>' +
+      '</div>' +
+      '<div class="clock" role="timer"></div>' +
+      '<div class="bar" aria-hidden="true"><div class="bar-fill"></div></div>' +
+      '<div class="meta"><span class="status-label"></span><span class="fires" hidden></span></div>' +
+      '<div class="controls">' +
+        '<button class="btn primary start" type="button">Start</button>' +
+        '<button class="btn reset" type="button">Reset</button>' +
+      '</div>' +
+      '<div class="config">' +
+        '<div class="duration-row">' +
+          '<div class="duration">' +
+            '<label>hr<input class="dur-h" type="number" min="0" max="99" inputmode="numeric" aria-label="Hours"></label>' +
+            '<label>min<input class="dur-m" type="number" min="0" max="59" inputmode="numeric" aria-label="Minutes"></label>' +
+            '<label>sec<input class="dur-s" type="number" min="0" max="59" inputmode="numeric" aria-label="Seconds"></label>' +
+          '</div>' +
+          '<div class="presets" role="group" aria-label="Quick durations"></div>' +
+        '</div>' +
+        '<div class="mode-row">' +
+          '<div class="segmented" role="radiogroup" aria-label="Timer mode">' +
+            '<label><input type="radio" value="once" name="mode-' + t.id + '">Once</label>' +
+            '<label><input type="radio" value="loop" name="mode-' + t.id + '">Loop</label>' +
+          '</div>' +
+          '<span class="mode-hint"></span>' +
+        '</div>' +
+        '<label class="msg">Say this when time is up' +
+          '<input class="msg-input" type="text" maxlength="400" placeholder="e.g. Check the oven">' +
+        '</label>' +
+      '</div>';
+
+    var ref = {
+      card: card,
+      name: card.querySelector('.name'),
+      clock: card.querySelector('.clock'),
+      barFill: card.querySelector('.bar-fill'),
+      statusLabel: card.querySelector('.status-label'),
+      fires: card.querySelector('.fires'),
+      startBtn: card.querySelector('.start'),
+      resetBtn: card.querySelector('.reset'),
+      durH: card.querySelector('.dur-h'),
+      durM: card.querySelector('.dur-m'),
+      durS: card.querySelector('.dur-s'),
+      presets: card.querySelector('.presets'),
+      modeRadios: card.querySelectorAll('input[type="radio"]'),
+      modeHint: card.querySelector('.mode-hint'),
+      msgInput: card.querySelector('.msg-input')
+    };
+    els[t.id] = ref;
+
+    ref.name.value = t.name;
+    ref.durH.value = d.h;
+    ref.durM.value = d.m;
+    ref.durS.value = d.s;
+    ref.msgInput.value = t.message;
+    ref.modeRadios.forEach(function (r) { r.checked = r.value === t.mode; });
+
+    PRESETS.forEach(function (p) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'preset';
+      b.textContent = p.label;
+      b.addEventListener('click', function () {
+        if (t.status === 'running') return;
+        setDuration(t, p.ms);
+      });
+      ref.presets.appendChild(b);
+    });
+
+    // events
+    ref.name.addEventListener('change', function () {
+      t.name = ref.name.value.trim() || 'Timer';
+      ref.name.value = t.name;
+      save();
+    });
+    card.querySelector('.delete').addEventListener('click', function () {
+      removeTimer(t.id);
+    });
+    ref.startBtn.addEventListener('click', function () { toggleStart(t); });
+    ref.resetBtn.addEventListener('click', function () { resetTimer(t); });
+    [ref.durH, ref.durM, ref.durS].forEach(function (inp) {
+      inp.addEventListener('change', function () { readDurationInputs(t); });
+    });
+    ref.modeRadios.forEach(function (r) {
+      r.addEventListener('change', function () {
+        if (!r.checked) return;
+        t.mode = r.value;
+        if (t.mode === 'once') t.fireCount = 0;
+        save();
+        updateCard(t);
+      });
+    });
+    ref.msgInput.addEventListener('change', function () {
+      t.message = ref.msgInput.value;
+      save();
+    });
+
+    return card;
+  }
+
+  function setDuration(t, ms) {
+    t.durationMs = ms;
+    t.remainingMs = ms;
+    if (t.status !== 'running') t.status = 'idle';
+    var ref = els[t.id];
+    var d = splitDuration(ms);
+    ref.durH.value = d.h;
+    ref.durM.value = d.m;
+    ref.durS.value = d.s;
+    save();
+    updateCard(t);
+  }
+
+  function readDurationInputs(t) {
+    var ref = els[t.id];
+    var h = clampNum(ref.durH.value, 0, 99, 0);
+    var m = clampNum(ref.durM.value, 0, 59, 0);
+    var s = clampNum(ref.durS.value, 0, 59, 0);
+    ref.durH.value = h; ref.durM.value = m; ref.durS.value = s;
+    setDuration(t, (h * 3600 + m * 60 + s) * 1000);
+  }
+
+  // ---------- timer actions ----------
+
+  function toggleStart(t) {
+    if (t.status === 'running') {
+      var rt = runtime[t.id];
+      t.remainingMs = rt ? Math.max(0, rt.endTime - Date.now()) : t.remainingMs;
+      delete runtime[t.id];
+      t.status = 'paused';
+    } else {
+      if (t.durationMs <= 0) return;
+      if (t.status === 'done' || t.remainingMs <= 0) {
+        t.remainingMs = t.durationMs;
+        if (t.mode === 'once') t.fireCount = 0; // fresh run, fresh count
+      }
+      ensureAudio(); // user gesture: unlock audio for the eventual chime
+      runtime[t.id] = { endTime: Date.now() + t.remainingMs };
+      t.status = 'running';
+    }
+    save();
+    updateCard(t);
+  }
+
+  function resetTimer(t) {
+    delete runtime[t.id];
+    t.status = 'idle';
+    t.remainingMs = t.durationMs;
+    t.fireCount = 0;
+    save();
+    updateCard(t);
+  }
+
+  function removeTimer(id) {
+    delete runtime[id];
+    var ref = els[id];
+    if (ref) ref.card.remove();
+    delete els[id];
+    state.timers = state.timers.filter(function (t) { return t.id !== id; });
+    save();
+    updateEmpty();
+  }
+
+  function fire(t) {
+    announce(t.message);
+    var ref = els[t.id];
+    if (ref) {
+      ref.card.classList.remove('fired');
+      void ref.card.offsetWidth; // restart animation
+      ref.card.classList.add('fired');
+    }
+  }
+
+  // ---------- render ----------
+
+  var STATUS_TEXT = { idle: 'Ready', running: 'Running', paused: 'Paused', done: 'Done' };
+
+  function updateCard(t) {
+    var ref = els[t.id];
+    if (!ref) return;
+    var running = t.status === 'running';
+    var rem = running && runtime[t.id]
+      ? Math.max(0, runtime[t.id].endTime - Date.now())
+      : t.remainingMs;
+
+    ref.card.dataset.status = t.status;
+    ref.clock.textContent = fmt(rem);
+    ref.barFill.style.width = (t.durationMs > 0 ? (rem / t.durationMs) * 100 : 0) + '%';
+    ref.statusLabel.textContent = STATUS_TEXT[t.status] || '';
+    ref.startBtn.textContent = running ? 'Pause' : (t.status === 'paused' ? 'Resume' : 'Start');
+    ref.startBtn.disabled = t.durationMs <= 0;
+
+    var showFires = t.mode === 'loop' || (t.mode === 'once' && t.status === 'done');
+    ref.fires.hidden = !(showFires && t.fireCount > 0);
+    ref.fires.textContent = 'fired ×' + t.fireCount;
+    ref.modeHint.textContent = t.mode === 'loop' ? 'repeats until paused' : 'fires a single time';
+
+    [ref.durH, ref.durM, ref.durS].forEach(function (i) { i.disabled = running; });
+    ref.presets.querySelectorAll('.preset').forEach(function (b) { b.disabled = running; });
+  }
+
+  function updateEmpty() {
+    document.getElementById('empty').hidden = state.timers.length > 0;
+  }
+
+  function renderAll() {
+    var mount = document.getElementById('timers');
+    mount.innerHTML = '';
+    els = {};
+    state.timers.forEach(function (t) {
+      mount.appendChild(buildCard(t));
+      updateCard(t);
+    });
+    updateEmpty();
+  }
+
+  // ---------- tick ----------
+
+  setInterval(function () {
+    var now = Date.now();
+    state.timers.forEach(function (t) {
+      if (t.status !== 'running') return;
+      var rt = runtime[t.id];
+      if (!rt) { t.status = 'paused'; updateCard(t); return; }
+      var rem = rt.endTime - now;
+      if (rem <= 0) {
+        t.fireCount++;
+        fire(t);
+        if (t.mode === 'loop') {
+          // re-arm from the scheduled end to stay drift-free; if the tab was
+          // backgrounded and we're well past zero, restart from now instead
+          var end = rt.endTime + t.durationMs;
+          if (end <= now) end = now + t.durationMs;
+          rt.endTime = end;
+        } else {
+          delete runtime[t.id];
+          t.status = 'done';
+          t.remainingMs = 0;
+        }
+        save();
+      } else {
+        t.remainingMs = rem; // keep fresh so unload-save restores accurately
+      }
+      updateCard(t);
+    });
+  }, TICK_MS);
+
+  // ---------- header controls ----------
+
+  document.getElementById('addBtn').addEventListener('click', function () {
+    var t = makeTimer({ name: 'Timer ' + (state.timers.length + 1) });
+    state.timers.push(t);
+    document.getElementById('timers').appendChild(buildCard(t));
+    updateCard(t);
+    updateEmpty();
+    save();
+    els[t.id].name.focus();
+    els[t.id].name.select();
+  });
+
+  var rateSlider = document.getElementById('rateSlider');
+  var rateValue = document.getElementById('rateValue');
+  rateSlider.value = state.settings.rate;
+  rateValue.textContent = Number(state.settings.rate).toFixed(1) + '×';
+  rateSlider.addEventListener('input', function () {
+    state.settings.rate = Number(rateSlider.value);
+    rateValue.textContent = state.settings.rate.toFixed(1) + '×';
+    save();
+  });
+
+  var chimeToggle = document.getElementById('chimeToggle');
+  chimeToggle.checked = state.settings.chime;
+  chimeToggle.addEventListener('change', function () {
+    state.settings.chime = chimeToggle.checked;
+    if (chimeToggle.checked) ensureAudio();
+    save();
+  });
+
+  document.getElementById('voiceSelect').addEventListener('change', function (e) {
+    state.settings.voiceURI = e.target.value;
+    save();
+  });
+
+  document.getElementById('testBtn').addEventListener('click', function () {
+    ensureAudio();
+    announce('This is your saywhen voice.');
+  });
+
+  if (speechOK) {
+    refreshVoices();
+    // voices often load asynchronously
+    speechSynthesis.addEventListener('voiceschanged', refreshVoices);
+  } else {
+    document.getElementById('speechWarn').hidden = false;
+    document.getElementById('testBtn').disabled = true;
+    document.getElementById('voiceSelect').disabled = true;
+  }
+
+  // ---------- export / import ----------
+
+  document.getElementById('exportBtn').addEventListener('click', function () {
+    var data = JSON.stringify(serialize(), null, 2);
+    var blob = new Blob([data], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'saywhen-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  });
+
+  var importFile = document.getElementById('importFile');
+  document.getElementById('importBtn').addEventListener('click', function () {
+    importFile.click();
+  });
+  importFile.addEventListener('change', function () {
+    var file = importFile.files && importFile.files[0];
+    importFile.value = '';
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var imported = null;
+      try { imported = sanitize(JSON.parse(reader.result)); } catch (e) { /* fallthrough */ }
+      if (!imported) {
+        alert('That file does not look like a saywhen backup.');
+        return;
+      }
+      if (!confirm('Replace your current timers and settings with this backup?')) return;
+      runtime = {};
+      state = imported;
+      rateSlider.value = state.settings.rate;
+      rateValue.textContent = Number(state.settings.rate).toFixed(1) + '×';
+      chimeToggle.checked = state.settings.chime;
+      refreshVoices();
+      renderAll();
+      save();
+    };
+    reader.readAsText(file);
+  });
+
+  // ---------- persistence on leave ----------
+
+  addEventListener('pagehide', save);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') save();
+  });
+
+  // ---------- boot ----------
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
