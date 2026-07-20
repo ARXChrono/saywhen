@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="saywhen — browser timers that speak up. Multiple drift-free timers with text-to-speech alerts.">
-<title>saywhen — timers that speak up</title>
+<meta name="description" content="saywhen: browser timers that speak up. Multiple drift-free timers with text-to-speech alerts.">
+<title>saywhen · timers that speak up</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏱</text></svg>">
 <style>
   :root {
@@ -65,15 +65,17 @@
     gap: 0.75rem 1.5rem;
     padding: 2rem 0 1.25rem;
   }
-  .brand { display: flex; flex-direction: column; gap: 0.1rem; }
-  h1 {
+  .brand { display: flex; flex-direction: column; gap: 0.05rem; flex: 1; min-width: 15rem; }
+  .wordmark {
     margin: 0;
-    font-size: 1.55rem;
+    font-size: 0.85rem;
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
+    color: var(--muted);
   }
-  h1 .dot { color: var(--primary); }
-  .tag { margin: 0; color: var(--muted); font-size: 0.9rem; }
+  .wordmark .dot { color: var(--primary); }
+  .wordmark .tag { font-weight: 400; margin-left: 0.3rem; }
+  .tag { margin: 0; color: var(--muted); font-size: 0.85rem; }
 
   .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
@@ -172,27 +174,19 @@
   .menu-check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); cursor: pointer; }
   .speech-warn { color: var(--accent); font-size: 0.85rem; }
 
-  /* ---------- Board title ---------- */
-  .board-label {
-    display: block;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 0.1rem;
-  }
+  /* ---------- Board title (the hero heading, lives in the header) ---------- */
   .board-title {
     display: block;
     width: 100%;
+    max-width: 28rem;
     background: transparent;
     border: 1px solid transparent;
     border-radius: 8px;
-    padding: 0.3rem 0.5rem;
-    margin: 0 0 1rem -0.5rem;
-    font-size: 1.35rem;
+    padding: 0.1rem 0.5rem;
+    margin-left: -0.5rem;
+    font-size: 1.55rem;
     font-weight: 700;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
     color: var(--ink);
     transition: border-color 150ms ease-out, background 150ms ease-out;
   }
@@ -386,19 +380,30 @@
     margin: 0.4rem 0 0.6rem;
   }
   .actions { display: flex; flex-direction: column; gap: 0.4rem; flex-shrink: 0; }
-  .actions .btn { min-width: 5.5rem; text-align: center; }
   .actions .start {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-width: 7rem;
     background: var(--green);
     border-color: var(--green);
     color: oklch(0.99 0 0);
   }
   .actions .start:hover:not(:disabled) { background: var(--green-hover); border-color: var(--green-hover); }
-  .actions .test {
+  .actions .start svg[hidden] { display: none; }
+  .config .test {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    width: fit-content;
     background: var(--accent);
     border-color: var(--accent);
     color: oklch(0.20 0.02 75);
+    font-size: 0.82rem;
+    padding: 0.4rem 0.8rem;
   }
-  .actions .test:hover:not(:disabled) { filter: brightness(1.08); }
+  .config .test:hover:not(:disabled) { filter: brightness(1.08); }
 
   /* drag to reorder */
   .drag-handle {
@@ -461,6 +466,7 @@
     font-weight: 600;
     color: var(--muted);
     cursor: pointer;
+    white-space: nowrap;
     transition: color 150ms ease-out;
   }
   .link:hover { color: var(--ink); }
@@ -471,8 +477,38 @@
   /* status dot + badges */
   .status-label::before { content: '● '; font-size: 0.7em; }
   .timer[data-status="running"] .status-label { color: var(--led); }
-  .warn-badge { color: var(--accent); }
-  .timer.closing .warn-badge { color: var(--danger); }
+  .warn-badge {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: oklch(0.80 0.14 75 / 0.12);
+    border: none;
+    border-radius: 999px;
+    padding: 0.12rem 0.55rem;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    cursor: pointer;
+    transition: background 150ms ease-out;
+  }
+  .warn-badge:hover { background: oklch(0.80 0.14 75 / 0.22); }
+  .timer.closing .warn-badge {
+    color: var(--danger);
+    background: oklch(0.62 0.16 25 / 0.15);
+  }
+
+  /* two-tap delete: first tap arms, second confirms */
+  .icon-btn.armed {
+    width: auto;
+    padding: 0 0.55rem;
+    color: var(--danger);
+    background: var(--surface-2);
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
 
   /* per-timer name hues */
   .timer.hue-0 .name { color: var(--hue-0); }
@@ -577,8 +613,9 @@
 <div class="wrap">
   <header>
     <div class="brand">
-      <h1>saywhen<span class="dot">.</span></h1>
-      <p class="tag">timers that speak up</p>
+      <p class="wordmark">saywhen<span class="dot">.</span> <span class="tag">timers that speak up</span></p>
+      <input class="board-title" id="boardTitle" type="text" maxlength="80"
+             placeholder="Name this board…" aria-label="Board title">
     </div>
     <div class="header-actions">
       <button class="icon-act" id="menuBtn" type="button" title="Voice &amp; sound settings" aria-expanded="false" aria-label="Voice and sound settings">
@@ -597,15 +634,15 @@
         </svg>
         <span class="act-label">Pop out</span>
       </button>
-      <button class="icon-act" id="exportBtn" type="button" title="Export backup (JSON)" aria-label="Export backup">
+      <button class="icon-act" id="exportBtn" type="button" title="Export: save this board out to a JSON file" aria-label="Export board to file">
         <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M8 2v8M5 7l3 3 3-3M2.5 13.5h11"/>
+          <path d="M8 10V2M5 5l3-3 3 3M2.5 13.5h11"/>
         </svg>
         <span class="act-label">Export</span>
       </button>
-      <button class="icon-act" id="importBtn" type="button" title="Import backup (JSON)" aria-label="Import backup">
+      <button class="icon-act" id="importBtn" type="button" title="Import: load a board in from a JSON file" aria-label="Import board from file">
         <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M8 10V2M5 5l3-3 3 3M2.5 13.5h11"/>
+          <path d="M8 2v8M5 7l3 3 3-3M2.5 13.5h11"/>
         </svg>
         <span class="act-label">Import</span>
       </button>
@@ -639,10 +676,6 @@
       <span class="speech-warn" id="speechWarn" hidden>Speech not supported in this browser</span>
     </div>
   </section>
-
-  <label class="board-label" for="boardTitle">Board</label>
-  <input class="board-title" id="boardTitle" type="text" maxlength="80"
-         placeholder="Name this board…">
 
   <section class="allbar" id="allBar" aria-label="Controls for all timers" hidden>
     <span class="allbar-label">All timers</span>
@@ -777,7 +810,7 @@
   function save() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(serialize()));
-    } catch (e) { /* storage unavailable — run in-memory only */ }
+    } catch (e) { /* storage unavailable: run in-memory only */ }
   }
 
   // Serialize with running timers frozen as paused at their current remaining.
@@ -1013,19 +1046,29 @@
           '<input class="clock-input" inputmode="numeric" aria-label="Type a time, like 7:30 or 730" hidden>' +
         '</div>' +
         '<div class="actions">' +
-          '<button class="btn start" type="button">Start</button>' +
-          '<button class="btn test" type="button" title="Preview this alert now: chime + spoken message. Does not affect the countdown.">Test</button>' +
+          '<button class="btn start" type="button">' +
+            '<svg class="ic-play" viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M4.5 2.5v11l9-5.5z"/></svg>' +
+            '<svg class="ic-pause" viewBox="0 0 16 16" width="13" height="13" fill="currentColor" aria-hidden="true" hidden><path d="M4.5 3h2.6v10H4.5zM8.9 3h2.6v10H8.9z"/></svg>' +
+            '<span class="start-label">Start</span>' +
+          '</button>' +
         '</div>' +
       '</div>' +
       '<div class="bar" aria-hidden="true"><div class="bar-fill"></div></div>' +
       '<div class="meta"><span class="status-label"></span><span class="meta-right">' +
-        '<span class="warn-badge" hidden></span>' +
+        '<button class="warn-badge" type="button" title="Edit the warning threshold" hidden>' +
+          '<svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="M12 5.5a4 4 0 00-8 0c0 4-1.7 5-1.7 5h11.4s-1.7-1-1.7-5"/>' +
+            '<path d="M9.2 13.2a1.4 1.4 0 01-2.4 0"/>' +
+          '</svg>' +
+          '<span class="warn-badge-txt"></span>' +
+        '</button>' +
         '<button class="cycle-chip" type="button" title="Click to set the cycle length"></button>' +
         '<span class="fires" hidden></span>' +
       '</span></div>' +
       '<div class="subctl">' +
         '<button class="link resync" type="button" title="Set where the countdown is right now">Resync</button>' +
         '<button class="link reset" type="button">Reset</button>' +
+        '<button class="link duplicate" type="button" title="Clone this timer, settings and all">Duplicate</button>' +
         '<span class="spacer"></span>' +
         '<button class="icon-tgl repeat-btn" type="button" aria-pressed="false" title="Repeat: re-arm and go again at zero">' +
           '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -1048,6 +1091,13 @@
           '<span class="warn-tail">sec left</span>' +
           '<span class="warn-hint">speaks, flashes red, beeps near zero</span>' +
         '</div>' +
+        '<button class="btn test" type="button" title="Preview this alert now: chime + spoken name. Does not affect the countdown.">' +
+          '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="M7.5 3.5L4.5 6H2v4h2.5l3 2.5z" fill="currentColor" stroke="none"/>' +
+            '<path d="M10 5.5a3.5 3.5 0 010 5M12 3.5a6 6 0 010 9"/>' +
+          '</svg>' +
+          'Test alert' +
+        '</button>' +
       '</div>';
 
     var ref = {
@@ -1059,6 +1109,7 @@
       statusLabel: card.querySelector('.status-label'),
       cycleChip: card.querySelector('.cycle-chip'),
       warnBadge: card.querySelector('.warn-badge'),
+      warnBadgeTxt: card.querySelector('.warn-badge-txt'),
       fires: card.querySelector('.fires'),
       startBtn: card.querySelector('.start'),
       testBtn: card.querySelector('.test'),
@@ -1106,12 +1157,38 @@
       ref.name.value = t.name;
       save();
     });
-    card.querySelector('.delete').addEventListener('click', function () {
-      if (!confirm('Delete "' + t.name + '"?')) return;
+    // two-tap delete: ✕ arms to "Sure?", second tap within 2.5s confirms
+    var delBtn = card.querySelector('.delete');
+    var delArm = null;
+    delBtn.addEventListener('click', function () {
+      if (!delBtn.classList.contains('armed')) {
+        delBtn.classList.add('armed');
+        delBtn.textContent = 'Sure?';
+        delArm = setTimeout(function () {
+          delBtn.classList.remove('armed');
+          delBtn.textContent = '✕';
+        }, 2500);
+        return;
+      }
+      clearTimeout(delArm);
       ref.card.classList.add('leaving');
       setTimeout(function () {
         flipMove(function () { removeTimer(t.id); }); // neighbors close the gap smoothly
       }, 170);
+    });
+    delBtn.addEventListener('blur', function () {
+      clearTimeout(delArm);
+      delBtn.classList.remove('armed');
+      delBtn.textContent = '✕';
+    });
+
+    card.querySelector('.duplicate').addEventListener('click', function () {
+      duplicateTimer(t);
+    });
+    ref.warnBadge.addEventListener('click', function () {
+      if (!card.classList.contains('open')) ref.cfgBtn.click();
+      ref.warnSec.focus();
+      ref.warnSec.select();
     });
     ref.startBtn.addEventListener('click', function () { toggleStart(t); });
     ref.testBtn.addEventListener('click', function () {
@@ -1130,8 +1207,8 @@
     });
 
     // The clock editor has two explicit modes:
-    //   'current' — set where the countdown is right now (cycle untouched)
-    //   'cycle'   — set the full cycle length (live countdown untouched)
+    //   'current': set where the countdown is right now (cycle untouched)
+    //   'cycle': set the full cycle length (live countdown untouched)
     function openClockEdit(mode) {
       ref.editing = true;
       ref.editMode = mode;
@@ -1351,6 +1428,29 @@
     updateCard(t);
   }
 
+  function duplicateTimer(t) {
+    var copy = makeTimer({
+      name: t.name + ' copy',
+      mode: t.mode,
+      durationMs: t.durationMs,
+      remainingMs: t.durationMs,
+      warn: t.warn,
+      warnSec: t.warnSec,
+      hue: state.timers.length % 6
+    });
+    var idx = state.timers.indexOf(t);
+    state.timers.splice(idx + 1, 0, copy);
+    var mount = document.getElementById('timers');
+    var newCard = buildCard(copy);
+    flipMove(function () {
+      mount.insertBefore(newCard, els[t.id].card.nextElementSibling);
+    });
+    newCard.classList.add('enter');
+    updateCard(copy);
+    updateEmpty();
+    save();
+  }
+
   function removeTimer(id) {
     delete runtime[id];
     var ref = els[id];
@@ -1394,14 +1494,17 @@
       : 'Click to type a time';
     ref.barFill.style.width = Math.min(100, t.durationMs > 0 ? (rem / t.durationMs) * 100 : 0) + '%';
     ref.statusLabel.textContent = closing ? 'Ending soon' : (STATUS_TEXT[t.status] || '');
-    ref.startBtn.textContent = running ? 'Pause' : (t.status === 'paused' ? 'Resume' : 'Start');
+    ref.startBtn.querySelector('.ic-play').hidden = running;
+    ref.startBtn.querySelector('.ic-pause').hidden = !running;
+    ref.startBtn.querySelector('.start-label').textContent =
+      running ? 'Pause' : (t.status === 'paused' ? 'Resume' : 'Start');
     ref.startBtn.disabled = t.durationMs <= 0;
 
     var showFires = t.mode === 'loop' || (t.mode === 'once' && t.status === 'done');
     ref.cycleChip.hidden = t.mode !== 'loop';
     ref.cycleChip.textContent = 'cycle ' + fmtShort(t.durationMs);
     ref.warnBadge.hidden = !t.warn;
-    ref.warnBadge.textContent = '⚠ warn ' + t.warnSec + 's';
+    ref.warnBadgeTxt.textContent = t.warnSec + 's';
     ref.fires.hidden = !(showFires && t.fireCount > 0);
     ref.fires.textContent = 'fired ×' + t.fireCount;
     var looping = t.mode === 'loop';
@@ -1522,7 +1625,7 @@
     }
     var docT = soonest
       ? fmt(soonest.rem) + ' · ' + (state.settings.boardTitle || 'saywhen')
-      : (state.settings.boardTitle ? state.settings.boardTitle + ' — saywhen' : 'saywhen — timers that speak up');
+      : (state.settings.boardTitle ? state.settings.boardTitle + ' · saywhen' : 'saywhen · timers that speak up');
     if (docT !== lastDocTitle) { lastDocTitle = docT; document.title = docT; }
   }, TICK_MS);
 
@@ -1591,8 +1694,8 @@
   function applyBoardTitle() {
     boardTitle.value = state.settings.boardTitle;
     document.title = state.settings.boardTitle
-      ? state.settings.boardTitle + ' — saywhen'
-      : 'saywhen — timers that speak up';
+      ? state.settings.boardTitle + ' · saywhen'
+      : 'saywhen · timers that speak up';
   }
   applyBoardTitle();
   boardTitle.addEventListener('change', function () {
