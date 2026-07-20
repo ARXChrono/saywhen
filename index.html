@@ -391,19 +391,40 @@
     color: oklch(0.99 0 0);
   }
   .actions .start:hover:not(:disabled) { background: var(--green-hover); border-color: var(--green-hover); }
+  .timer[data-status="paused"] .actions .start {
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+  .timer[data-status="paused"] .actions .start:hover:not(:disabled) {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+  }
+  .timer[data-status="running"] .actions .start {
+    background: var(--surface-2);
+    border-color: var(--border);
+    color: var(--ink);
+  }
+  .timer[data-status="running"] .actions .start:hover:not(:disabled) {
+    background: var(--border);
+    border-color: var(--muted);
+  }
   .actions .start svg[hidden] { display: none; }
   .config .test {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
     width: fit-content;
-    background: var(--accent);
-    border-color: var(--accent);
-    color: oklch(0.20 0.02 75);
+    background: transparent;
+    border-color: var(--primary-dim);
+    color: var(--primary);
     font-size: 0.82rem;
     padding: 0.4rem 0.8rem;
   }
-  .config .test:hover:not(:disabled) { filter: brightness(1.08); }
+  .config .test:hover:not(:disabled) {
+    background: var(--surface-2);
+    border-color: var(--primary);
+    color: var(--ink);
+  }
 
   /* drag to reorder */
   .drag-handle {
@@ -1494,8 +1515,15 @@
       : 'Click to type a time';
     ref.barFill.style.width = Math.min(100, t.durationMs > 0 ? (rem / t.durationMs) * 100 : 0) + '%';
     ref.statusLabel.textContent = closing ? 'Ending soon' : (STATUS_TEXT[t.status] || '');
-    ref.startBtn.querySelector('.ic-play').hidden = running;
-    ref.startBtn.querySelector('.ic-pause').hidden = !running;
+    var playIcon = ref.startBtn.querySelector('.ic-play');
+    var pauseIcon = ref.startBtn.querySelector('.ic-pause');
+    if (running) {
+      playIcon.setAttribute('hidden', '');
+      pauseIcon.removeAttribute('hidden');
+    } else {
+      playIcon.removeAttribute('hidden');
+      pauseIcon.setAttribute('hidden', '');
+    }
     ref.startBtn.querySelector('.start-label').textContent =
       running ? 'Pause' : (t.status === 'paused' ? 'Resume' : 'Start');
     ref.startBtn.disabled = t.durationMs <= 0;
